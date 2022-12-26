@@ -1,0 +1,21 @@
+[package]
+name = "aoc2023"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "common"
+path = "src/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.6"
+hashbrown = "0.13.1"
+time = "0.1.40"
+num = { version = "0.4.0" }
+rustc-hash = "1.1.0"
+smallvec = { version = "1.10.0", features = ["specialization"] }
+md5 = "0.7.0"
+rayon = "1.6.1"
+arrayvec = "0.7.2"
