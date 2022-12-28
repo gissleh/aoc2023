@@ -21,6 +21,25 @@ impl<T> Point<T> where T: SimdElement {
     }
 }
 
+impl<T> Copy for Point<T> where T: SimdElement, Simd<T, 2>: Copy {}
+
+impl<T> Clone for Point<T> where T: SimdElement, Simd<T, 2>: Clone {
+    #[inline(always)]
+    fn clone(&self) -> Self { Self(self.0.clone()) }
+}
+
+impl<T> Default for Point<T> where T: SimdElement, Simd<T, 2>: Default {
+    #[inline(always)]
+    fn default() -> Self { Self(Default::default()) }
+}
+
+impl<T> Eq for Point<T> where T: SimdElement, Simd<T, 2>: Eq {}
+
+impl<T> PartialEq for Point<T> where T: SimdElement, Simd<T, 2>: PartialEq {
+    #[inline(always)]
+    fn eq(&self, other: &Self) -> bool { self.0 == other.0 }
+}
+
 impl<T> Add for Point<T> where T: SimdElement, Simd<T, 2>: Add<Output=Simd<T, 2>> {
     type Output = Point<T>;
     #[inline(always)]
@@ -70,7 +89,7 @@ impl<T> Debug for Point<T> where T: SimdElement + Debug {
         let coords = self.coords();
         f.debug_tuple("Point")
             .field(&coords[0])
-            .field(&coords[0])
+            .field(&coords[1])
             .finish()
     }
 }

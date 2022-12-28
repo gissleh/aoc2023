@@ -2,11 +2,13 @@ use std::fmt::{Display, Formatter};
 use repeat::{Repeat, RepeatDelimited};
 use skip::{Skip, SkipAll};
 use and::{And, AndReplace, AndDiscard};
+use map::{Map, MapValue};
 
 mod repeat;
 mod skip;
 mod and;
 mod int;
+mod map;
 
 pub use int::{signed_int, unsigned_int, digit};
 
@@ -29,22 +31,34 @@ pub trait Parser<'i, T>: Sized + Copy {
         ParseResult::Bad(ParseError::new("None were found", input))
     }
 
+    /// Process the output of this parser with this mapping function. It may not borrow
+    /// anything from the closure as it must be copyable.
+    fn map<F, TF>(self, f: F) -> Map<Self, F, T, TF> where F: Fn(T) -> TF + Copy {
+        Map::new(self, f)
+    }
+
+    /// If this parser succeeds, it will return the passed value instead
+    fn map_to<TV>(self, value: TV) -> MapValue<Self, T, TV> where TV: Copy {
+        MapValue::new(self, value)
+    }
+
+
     /// And parses the current parser, and then the one to the right, returning both values.
     /// You may want to use and_discard or and_instead to keep only one value.
-    fn and<PR, TR>(self, parse_right: PR) -> And<Self, T, PR, TR> where PR: Parser<'i, TR> {
-        And::new(self, parse_right)
+    fn and<PR, TR>(self, rhs: PR) -> And<Self, T, PR, TR> where PR: Parser<'i, TR> {
+        And::new(self, rhs)
     }
 
     /// And parses the current parser, and then the one to the right, returning both values.
     /// You may want to use and_discard or and_instead to keep only one value.
-    fn and_instead<PR, TR>(self, parse_right: PR) -> AndReplace<Self, T, PR, TR> where PR: Parser<'i, TR> {
-        AndReplace::new(self, parse_right)
+    fn and_instead<PR, TR>(self, rhs: PR) -> AndReplace<Self, T, PR, TR> where PR: Parser<'i, TR> {
+        AndReplace::new(self, rhs)
     }
 
     /// And parses the current parser, and then the one to the right, returning both values.
     /// You may want to use and_discard or and_instead to keep only one value.
-    fn and_discard<PR, TR>(self, parse_right: PR) -> AndDiscard<Self, T, PR, TR> where PR: Parser<'i, TR> {
-        AndDiscard::new(self, parse_right)
+    fn and_discard<PR, TR>(self, rhs: PR) -> AndDiscard<Self, T, PR, TR> where PR: Parser<'i, TR> {
+        AndDiscard::new(self, rhs)
     }
 
     /// Repeat this parser until the collection fills or a non-first result fails.
@@ -64,8 +78,8 @@ pub trait Parser<'i, T>: Sized + Copy {
 
     /// Same as repeat, but it requires a delimiter between values.
     #[inline]
-    fn repeat_delimited<R, TD, PD>(self, delimiter_parser: PD) -> RepeatDelimited<Self, T, PD, TD, R> where PD: Parser<'i, TD> {
-        RepeatDelimited::new(self, delimiter_parser)
+    fn repeat_delimited<R, TD, PD>(self, delimiter: PD) -> RepeatDelimited<Self, T, PD, TD, R> where PD: Parser<'i, TD> {
+        RepeatDelimited::new(self, delimiter)
     }
 
     /// Same as repeat, but it requires a specified amount.
