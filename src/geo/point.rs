@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::simd::{Simd, SimdElement};
 
@@ -21,6 +22,13 @@ impl<T> Point<T> where T: SimdElement {
     }
 }
 
+impl<T> Hash for Point<T> where T: SimdElement, Simd<T, 2>: Hash {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state)
+    }
+}
+
+
 impl<T> Copy for Point<T> where T: SimdElement, Simd<T, 2>: Copy {}
 
 impl<T> Clone for Point<T> where T: SimdElement, Simd<T, 2>: Clone {
@@ -28,7 +36,7 @@ impl<T> Clone for Point<T> where T: SimdElement, Simd<T, 2>: Clone {
     fn clone(&self) -> Self { Self(self.0.clone()) }
 }
 
-impl<T> Default for Point<T> where T: SimdElement, Simd<T, 2>: Default {
+impl<T> const Default for Point<T> where T: SimdElement, Simd<T, 2>: ~const Default {
     #[inline(always)]
     fn default() -> Self { Self(Default::default()) }
 }

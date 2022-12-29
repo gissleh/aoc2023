@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
-use arrayvec::ArrayVec;
-use smallvec::{Array, SmallVec};
+use crate::utils::gather_target::GatherTarget;
 use crate::parse::{ParseError, Parser, ParseResult};
 
 pub struct Repeat<P, T, R> {
@@ -33,17 +32,17 @@ impl<P, T, R> Clone for Repeat<P, T, R> where P: Clone {
     }
 }
 
-impl<'i, P, R, T> Parser<'i, R> for Repeat<P, T, R> where P: Parser<'i, T>, R: RepeatInto<T> {
+impl<'i, P, R, T> Parser<'i, R> for Repeat<P, T, R> where P: Parser<'i, T>, R: GatherTarget<T> {
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, R> {
         match self.parser.parse(input) {
             ParseResult::Good(res, mut current_input) => {
-                let mut target = R::create_collection(self.amount);
+                let mut target = R::start_gathering(self.amount);
                 let mut index = 1;
-                target.add_parsed_value(0, res);
+                target.gather_into(0, res);
 
                 while let ParseResult::Good(res, new_input) = self.parser.parse(current_input) {
-                    let full = target.add_parsed_value(index, res);
+                    let full = target.gather_into(index, res);
                     current_input = new_input;
                     index += 1;
 
@@ -101,20 +100,20 @@ impl<'i, PV, TV, PD, TD, R> Clone for RepeatDelimited<PV, TV, PD, TD, R> where P
     }
 }
 
-impl<'i, PV, TV, PD, TD, R> Parser<'i, R> for RepeatDelimited<PV, TV, PD, TD, R> where PV: Parser<'i, TV>, PD: Parser<'i, TD>, R: RepeatInto<TV> {
+impl<'i, PV, TV, PD, TD, R> Parser<'i, R> for RepeatDelimited<PV, TV, PD, TD, R> where PV: Parser<'i, TV>, PD: Parser<'i, TD>, R: GatherTarget<TV> {
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, R> {
         match self.value_parser.parse(input) {
             ParseResult::Good(res, mut current_input) => {
-                let mut target = R::create_collection(self.amount);
+                let mut target = R::start_gathering(self.amount);
                 let mut index = 1;
-                target.add_parsed_value(0, res);
+                target.gather_into(0, res);
 
                 match self.delimiter_parser.parse(current_input) {
                     ParseResult::Good(_, new_input) => {
                         current_input = new_input;
                         while let ParseResult::Good(res, new_input) = self.value_parser.parse(current_input) {
-                            let full = target.add_parsed_value(index, res);
+                            let full = target.gather_into(index, res);
                             current_input = new_input;
                             index += 1;
 
@@ -142,112 +141,9 @@ impl<'i, PV, TV, PD, TD, R> Parser<'i, R> for RepeatDelimited<PV, TV, PD, TD, R>
     }
 }
 
-trait RepeatInto<T> {
-    fn create_collection(size_hint: usize) -> Self;
-    fn add_parsed_value(&mut self, index: usize, value: T) -> bool;
-}
-
-impl<T> RepeatInto<T> for Vec<T> {
-    fn create_collection(size_hint: usize) -> Self {
-        Vec::with_capacity(size_hint)
-    }
-
-    fn add_parsed_value(&mut self, _index: usize, value: T) -> bool {
-        self.push(value);
-        false
-    }
-}
-
-impl<const N: usize, T> RepeatInto<T> for [T; N] where T: Default + Copy {
-    fn create_collection(_size_hint: usize) -> Self {
-        [T::default(); N]
-    }
-
-    fn add_parsed_value(&mut self, index: usize, value: T) -> bool {
-        self[index] = value;
-        index == self.len() - 1
-    }
-}
-
-impl<const N: usize, T> RepeatInto<T> for ([T; N], usize) where T: Default + Copy {
-    fn create_collection(_size_hint: usize) -> Self {
-        ([T::default(); N], 0)
-    }
-
-    fn add_parsed_value(&mut self, index: usize, value: T) -> bool {
-        self.0[index] = value;
-        self.1 = index + 1;
-        index == self.0.len() - 1
-    }
-}
-
-impl<const N: usize, T> RepeatInto<T> for ArrayVec<T, N> {
-    fn create_collection(_size_hint: usize) -> Self {
-        ArrayVec::new()
-    }
-
-    fn add_parsed_value(&mut self, _index: usize, value: T) -> bool {
-        self.push(value);
-        self.is_full()
-    }
-}
-
-impl<A, T> RepeatInto<T> for SmallVec<A> where A: Array<Item=T> {
-    fn create_collection(_size_hint: usize) -> Self {
-        SmallVec::new()
-    }
-
-    fn add_parsed_value(&mut self, _index: usize, value: T) -> bool {
-        self.push(value);
-        false
-    }
-}
-
-impl<T> RepeatInto<T> for (T, T) where T: Default {
-    fn create_collection(_size_hint: usize) -> Self { (T::default(), T::default()) }
-
-    fn add_parsed_value(&mut self, index: usize, value: T) -> bool {
-        match index {
-            0 => self.0 = value,
-            1 => self.1 = value,
-            _ => {}
-        }
-        index == 1
-    }
-}
-
-impl<T> RepeatInto<T> for (T, T, T) where T: Default {
-    fn create_collection(_size_hint: usize) -> Self { (T::default(), T::default(), T::default()) }
-
-    fn add_parsed_value(&mut self, index: usize, value: T) -> bool {
-        match index {
-            0 => self.0 = value,
-            1 => self.1 = value,
-            2 => self.2 = value,
-            _ => {}
-        }
-        index == 2
-    }
-}
-
-impl<T> RepeatInto<T> for (T, T, T, T) where T: Default {
-    fn create_collection(_size_hint: usize) -> Self { (T::default(), T::default(), T::default(), T::default()) }
-
-    fn add_parsed_value(&mut self, index: usize, value: T) -> bool {
-        match index {
-            0 => self.0 = value,
-            1 => self.1 = value,
-            2 => self.2 = value,
-            3 => self.3 = value,
-            _ => {}
-        }
-        index == 3
-    }
-}
-
-
 #[cfg(test)]
 mod tests {
+    use arrayvec::ArrayVec;
     use crate::parse::unsigned_int;
     use super::*;
 
