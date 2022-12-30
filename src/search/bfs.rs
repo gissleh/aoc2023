@@ -38,36 +38,23 @@ pub fn bfs<S>() -> impl Search<S> where S: Clone + Hash + Eq {
 mod tests {
     use super::*;
     use crate::geo::Point;
-
-    const MAZE_01: &[u8] = include_bytes!("./test_fixtures/maze01.txt");
+    use crate::search::tests::{MAZE_01, MAZE_02, search_maze};
 
     #[test]
     fn bfs_can_gather() {
-        let maze: Vec<&[u8]> = MAZE_01.split(|v| *v == b'\n').collect();
-
         let mut bfs = bfs();
+
+        bfs.reset(Point::new(4usize, 4usize));
+        let findings: Vec<(char, Point<usize>)> = bfs.gather(search_maze(MAZE_02));
+        assert_eq!(findings.as_slice(), &[
+            ('b', Point::new(4, 5)),
+            ('r', Point::new(6, 4)),
+            ('u', Point::new(4, 1)),
+            ('l', Point::new(1, 4)),
+        ]);
+
         bfs.reset(Point::new(1usize, 1usize));
-
-        let findings: Vec<(char, Point<usize>)> = bfs.gather(|search, p| {
-            let [x, y] = *p.coords();
-            let ch = maze[y][x];
-
-            if ch == b'#' {
-                return None;
-            }
-
-            search.push_state(Point::new(x, y - 1));
-            search.push_state(Point::new(x - 1, y));
-            search.push_state(Point::new(x + 1, y));
-            search.push_state(Point::new(x, y + 1));
-
-            if ch != b'.' {
-                Some((ch as char, p))
-            } else {
-                None
-            }
-        });
-
+        let findings: Vec<(char, Point<usize>)> = bfs.gather(search_maze(MAZE_01));
         assert_eq!(findings.as_slice(), &[
             ('f', Point::new(1, 5)),
             ('g', Point::new(24, 2)),
@@ -76,6 +63,6 @@ mod tests {
             ('b', Point::new(28, 10)),
             ('c', Point::new(22, 7)),
             ('e', Point::new(8, 5)),
-        ])
+        ]);
     }
 }

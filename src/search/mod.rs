@@ -1,7 +1,9 @@
 use crate::utils::gather_target::GatherTarget;
 pub use bfs::bfs;
+pub use dfs::dfs;
 
 mod bfs;
+mod dfs;
 
 pub trait Search<S>: Sized {
     fn reset(&mut self, initial_state: S);
@@ -52,5 +54,38 @@ pub trait Search<S>: Sized {
         }
 
         gather_target
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use super::*;
+    use crate::geo::Point;
+
+    pub(crate) const MAZE_01: &[u8] = include_bytes!("./test_fixtures/maze01.txt");
+    pub(crate) const MAZE_02: &[u8] = include_bytes!("./test_fixtures/maze02.txt");
+
+    pub(crate) fn search_maze<S: Search<Point<usize>>>(maze: &'static [u8]) -> impl Fn(&mut S, Point<usize>) -> Option<(char, Point<usize>)> {
+        let maze: Vec<&[u8]> = maze.split(|v| *v == b'\n').collect();
+
+        move |search, p| {
+            let [x, y] = *p.coords();
+            let ch = maze[y][x];
+
+            if ch == b'#' {
+                return None;
+            }
+
+            search.push_state(Point::new(x, y - 1));
+            search.push_state(Point::new(x - 1, y));
+            search.push_state(Point::new(x + 1, y));
+            search.push_state(Point::new(x, y + 1));
+
+            if ch != b'.' {
+                Some((ch as char, p))
+            } else {
+                None
+            }
+        }
     }
 }
