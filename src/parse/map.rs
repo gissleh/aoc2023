@@ -88,17 +88,18 @@ mod tests {
             ParseResult::Good(174, b"bcde")
         );
         assert_eq!(
-            b'<'.and_instead(signed_int::<i32>())
-                .and_discard(b',')
-                .then_skip_all(b' ')
-                .and(signed_int::<i32>())
-                .and_discard(b'>')
-                .map(|(x, y)| Point::new(x, y))
-                .repeat_delimited(b','.then_skip_all(b' '))
+            b'<'.and_instead(
+                signed_int::<i32>()
+                    .delimited_by(b','.then_skip_all(b' '))
+                    .repeat::<(_, _)>()
+                    .and_discard(b'>')
+                    .map(|(x, y)| Point::new(x, y)))
+                .delimited_by(b','.then_skip_all(b' '))
+                .repeat()
                 .parse(b"<-117, 640>, <96, -32>,  <900,   800>"),
             ParseResult::Good([
-                Point::new(-117, 640), Point::new(96, -32), Point::new(900, 800)
-            ], b""),
+                                  Point::new(-117, 640), Point::new(96, -32), Point::new(900, 800)
+                              ], b""),
             "More complex mapping case for a loose point parser."
         )
     }

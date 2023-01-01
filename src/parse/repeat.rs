@@ -1,142 +1,107 @@
 use std::marker::PhantomData;
-use crate::utils::gather_target::GatherTarget;
 use crate::parse::{ParseError, Parser, ParseResult};
+use crate::utils::gather_target::GatherTarget;
 
-pub struct Repeat<P, T, R> {
-    amount: usize,
+pub struct Repeat<P, T, G> {
     parser: P,
-    spooky_ghost: PhantomData<(T, R)>,
+    amount: usize,
+    spooky_ghost: PhantomData<(G, T)>,
 }
 
-impl<P, T, R> Repeat<P, T, R> {
-    #[inline]
-    pub(crate) fn new(parser: P) -> Self {
-        Self::with_amount(parser, 0)
+impl<P, T, G> Repeat<P, T, G> {
+    pub(crate) fn new(parser: P, amount: usize) -> Self {
+        Self { parser, amount, spooky_ghost: PhantomData::default() }
     }
+}
 
-    #[inline]
-    pub(crate) fn with_amount(parser: P, amount: usize) -> Self {
+impl<P, T, G> Copy for Repeat<P, T, G> where P: Copy {}
+
+impl<P, T, G> Clone for Repeat<P, T, G> where P: Clone {
+    fn clone(&self) -> Self {
         Self {
-            amount,
-            parser,
-            spooky_ghost: PhantomData::default(),
+            parser: self.parser.clone(),
+            amount: self.amount,
+            spooky_ghost: Default::default(),
         }
     }
 }
 
-impl<P, T, R> Copy for Repeat<P, T, R> where P: Copy {}
+impl<'i, P, T, G> Parser<'i, G> for Repeat<P, T, G> where P: Parser<'i, T>, G: GatherTarget<T> {
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, G> {
+        let mut target = G::start_gathering(self.amount);
 
-impl<P, T, R> Clone for Repeat<P, T, R> where P: Clone {
-    fn clone(&self) -> Self {
-        Self { parser: self.parser.clone(), amount: self.amount, spooky_ghost: Default::default() }
-    }
-}
+        match self.parser.parse_into(input, &mut target, 0) {
+            ParseResult::Good(full, mut current_input) => {
+                if full || self.amount == 1 {
+                    return ParseResult::Good(target, current_input);
+                }
 
-impl<'i, P, R, T> Parser<'i, R> for Repeat<P, T, R> where P: Parser<'i, T>, R: GatherTarget<T> {
-    #[inline]
-    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, R> {
-        match self.parser.parse(input) {
-            ParseResult::Good(res, mut current_input) => {
-                let mut target = R::start_gathering(self.amount);
                 let mut index = 1;
-                target.gather_into(0, res);
-
-                while let ParseResult::Good(res, new_input) = self.parser.parse(current_input) {
-                    let full = target.gather_into(index, res);
+                while let ParseResult::Good(full, new_input) = self.parser.parse_into(current_input, &mut target, index) {
                     current_input = new_input;
                     index += 1;
+                    if full {
+                        if self.amount != 0 && index != self.amount {
+                            return ParseResult::Bad(ParseError::new("Container was full before amount was met.", input));
+                        }
 
-                    if full || index == self.amount {
+                        break;
+                    } else if index == self.amount {
                         break;
                     }
                 }
 
-                if self.amount > 0 && index != self.amount {
-                    return ParseResult::Bad(ParseError::new("Target amount in Repeat not met", input));
-                }
-
                 ParseResult::Good(target, current_input)
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Repeat failed on first", input)),
+            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Failed to parse first in Repeat", input))
         }
     }
 }
 
-pub struct RepeatDelimited<PV, TV, PD, TD, R> {
-    amount: usize,
-    value_parser: PV,
-    delimiter_parser: PD,
-    spooky_ghost: PhantomData<(TV, TD, R)>,
+pub struct DelimitedBy<PB, PD, TB, TD> {
+    parser_body: PB,
+    parser_delim: PD,
+    spooky_ghost: PhantomData<(TB, TD)>,
 }
 
-impl<PV, TV, PD, TD, R> RepeatDelimited<PV, TV, PD, TD, R> {
-    #[inline]
-    pub(crate) fn new(value_parser: PV, delimiter_parser: PD) -> Self {
-        Self::with_amount(value_parser, delimiter_parser, 0)
-    }
-
-    #[inline]
-    pub(crate) fn with_amount(value_parser: PV, delimiter_parser: PD, amount: usize) -> Self {
-        Self {
-            amount,
-            value_parser,
-            delimiter_parser,
-            spooky_ghost: PhantomData::default(),
-        }
+impl<PB, PD, TB, TD> DelimitedBy<PB, PD, TB, TD> {
+    pub(crate) fn new(parser_body: PB, parser_delim: PD) -> Self {
+        Self { parser_body, parser_delim, spooky_ghost: PhantomData::default() }
     }
 }
 
-impl<'i, PV, TV, PD, TD, R> Copy for RepeatDelimited<PV, TV, PD, TD, R> where PV: Parser<'i, TV>, PD: Parser<'i, TD> {}
+impl<PB, PD, TB, TD> Copy for DelimitedBy<PB, PD, TB, TD> where PB: Copy, PD: Copy {}
 
-impl<'i, PV, TV, PD, TD, R> Clone for RepeatDelimited<PV, TV, PD, TD, R> where PV: Parser<'i, TV>, PD: Parser<'i, TD> {
-    #[inline]
+impl<PB, PD, TB, TD> Clone for DelimitedBy<PB, PD, TB, TD> where PB: Clone, PD: Clone {
     fn clone(&self) -> Self {
         Self {
-            amount: self.amount,
-            value_parser: self.value_parser.clone(),
-            delimiter_parser: self.delimiter_parser.clone(),
-            spooky_ghost: PhantomData::default(),
+            parser_body: self.parser_body.clone(),
+            parser_delim: self.parser_delim.clone(),
+            spooky_ghost: Default::default(),
         }
     }
 }
 
-impl<'i, PV, TV, PD, TD, R> Parser<'i, R> for RepeatDelimited<PV, TV, PD, TD, R> where PV: Parser<'i, TV>, PD: Parser<'i, TD>, R: GatherTarget<TV> {
+impl<'i, PB, PD, TB, TD> Parser<'i, TB> for DelimitedBy<PB, PD, TB, TD> where PB: Parser<'i, TB>, PD: Parser<'i, TD> {
     #[inline]
-    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, R> {
-        match self.value_parser.parse(input) {
-            ParseResult::Good(res, mut current_input) => {
-                let mut target = R::start_gathering(self.amount);
-                let mut index = 1;
-                target.gather_into(0, res);
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TB> {
+        self.parser_body.parse(input)
+    }
 
-                match self.delimiter_parser.parse(current_input) {
-                    ParseResult::Good(_, new_input) => {
-                        current_input = new_input;
-                        while let ParseResult::Good(res, new_input) = self.value_parser.parse(current_input) {
-                            let full = target.gather_into(index, res);
-                            current_input = new_input;
-                            index += 1;
-
-                            if full || index == self.amount {
-                                break;
-                            }
-
-                            match self.delimiter_parser.parse(current_input) {
-                                ParseResult::Good(_, new_input) => { current_input = new_input; }
-                                ParseResult::Bad(_) => { break; }
-                            }
-                        }
+    #[inline]
+    fn parse_into<G>(&self, input: &'i [u8], target: &mut G, index: usize) -> ParseResult<'i, bool> where G: GatherTarget<TB> {
+        if index > 0 {
+            match self.parser_delim.parse(input) {
+                ParseResult::Good(_, new_input) => {
+                    match self.parser_body.parse_into(new_input, target, index) {
+                        ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Failed to parse body after delimiter", input)),
+                        good_res => good_res,
                     }
-                    ParseResult::Bad(_) => {}
                 }
-
-                if self.amount > 0 && index != self.amount {
-                    return ParseResult::Bad(ParseError::new("Target amount in Repeat not met", input));
-                }
-
-                ParseResult::Good(target, current_input)
+                ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Delimiter not found", input))
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Repeat failed on first", input)),
+        } else {
+            self.parser_body.parse_into(input, target, 0)
         }
     }
 }
@@ -174,14 +139,15 @@ mod tests {
     #[test]
     fn repeat_repeats_with_delimiter() {
         assert_eq!(
-            // This is ugly, but this generic parameter should be entirely inferred.
-            unsigned_int::<u32>().repeat_delimited::<(_, _, _), _, _>(b',').parse(b"473,1123,5932"),
+            // This was ugly, but now it's easier to define a parameter here.
+            unsigned_int::<u32>().delimited_by(b',').repeat::<(_, _, _)>().parse(b"473,1123,5932"),
             ParseResult::Good((473, 1123, 5932), b""),
         );
 
-        // This is the way it should be done.
+        // The repeat could also have its type inferred like collect.
         let v: ParseResult<([u32; 8], usize)> = unsigned_int::<u32>()
-            .repeat_delimited(b',')
+            .delimited_by(b',')
+            .repeat()
             .parse(b"1,2,8,64,234,221");
 
         assert_eq!(v, ParseResult::Good(([1,2,8,64,234,221,0,0], 6), b""));

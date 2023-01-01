@@ -28,6 +28,11 @@ impl<T> Hash for Point<T> where T: SimdElement, Simd<T, 2>: Hash {
     }
 }
 
+impl<T> From<(T, T)> for Point<T> where T: SimdElement {
+    fn from((x, y): (T, T)) -> Self {
+        Self(Simd::from_array([x, y]))
+    }
+}
 
 impl<T> Copy for Point<T> where T: SimdElement, Simd<T, 2>: Copy {}
 

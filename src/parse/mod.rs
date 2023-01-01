@@ -1,12 +1,13 @@
 use std::fmt::{Display, Formatter};
 
-use repeat::{Repeat, RepeatDelimited};
+use repeat::{Repeat, DelimitedBy};
 use skip::{Skip, SkipAll};
 use and::{And, AndReplace, AndDiscard};
 use map::{Map, MapValue};
 use or::Or;
 
 pub use int::{signed_int, unsigned_int, digit};
+use crate::utils::gather_target::GatherTarget;
 
 mod repeat;
 mod skip;
@@ -33,6 +34,15 @@ pub trait Parser<'i, T>: Sized + Copy {
         }
 
         ParseResult::Bad(ParseError::new("None were found", input))
+    }
+
+    // Parse into this container
+    #[inline]
+    fn parse_into<G>(&self, input: &'i [u8], target: &mut G, index: usize) -> ParseResult<'i, bool> where G: GatherTarget<T> {
+        match self.parse(input) {
+            ParseResult::Good(v, input) => ParseResult::Good(target.gather_into(index, v), input),
+            ParseResult::Bad(err) => ParseResult::Bad(err)
+        }
     }
 
     /// Process the output of this parser with this mapping function. It may not borrow
@@ -88,25 +98,19 @@ pub trait Parser<'i, T>: Sized + Copy {
     /// * `(T, T) | (T, T, T) | (T, T, T, T)` – Collect it into a tuple, unfilled will have default value
     #[inline]
     fn repeat<R>(self) -> Repeat<Self, T, R> {
-        Repeat::new(self)
+        Repeat::new(self, 0)
     }
 
-    /// Same as repeat, but it requires a delimiter between values.
-    #[inline]
-    fn repeat_delimited<R, TD, PD>(self, delimiter: PD) -> RepeatDelimited<Self, T, PD, TD, R> where PD: Parser<'i, TD> {
-        RepeatDelimited::new(self, delimiter)
-    }
-
-    /// Same as repeat, but it requires a specified amount.
     #[inline]
     fn repeat_n<R>(self, amount: usize) -> Repeat<Self, T, R> {
-        Repeat::with_amount(self, amount)
+        Repeat::new(self, amount)
     }
 
-    /// Same as repeat_delimited, but it requires a specified amount.
+    /// This parser does nothing on its own, but it will require a delimiter when paired with
+    /// repeat. It is not strict, and will stop adding if it parses short of the delimiter.
     #[inline]
-    fn repeat_delimited_n<R, TD, PD>(self, delimiter_parser: PD, amount: usize) -> RepeatDelimited<Self, T, PD, TD, R> where PD: Parser<'i, TD> {
-        RepeatDelimited::with_amount(self, delimiter_parser, amount)
+    fn delimited_by<PD, TD>(self, delimiter: PD) -> DelimitedBy<Self, PD, T, TD> where PD: Parser<'i, TD> {
+        DelimitedBy::new(self, delimiter)
     }
 
     /// Parse this, then skip what comes from parser2.
