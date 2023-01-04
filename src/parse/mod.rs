@@ -1,13 +1,16 @@
 use std::fmt::{Display, Formatter};
+use std::ops::RangeBounds;
 
 use repeat::{Repeat, DelimitedBy};
 use skip::{Skip, SkipAll};
 use and::{And, AndReplace, AndDiscard};
 use map::{Map, MapValue};
 use or::Or;
+use filter::{InRange, Where};
+use crate::utils::gather_target::GatherTarget;
 
 pub use int::{signed_int, unsigned_int, digit};
-use crate::utils::gather_target::GatherTarget;
+use crate::parse::vanguard::Vanguard;
 
 mod repeat;
 mod skip;
@@ -15,6 +18,8 @@ mod and;
 mod or;
 mod int;
 mod map;
+mod filter;
+mod vanguard;
 
 pub trait Parser<'i, T>: Sized + Copy {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T>;
@@ -123,6 +128,26 @@ pub trait Parser<'i, T>: Sized + Copy {
     #[inline]
     fn then_skip_all<P2, T2>(self, parser: P2) -> SkipAll<Self, P2, T, T2> where P2: Parser<'i, T2> {
         SkipAll::new(self, parser)
+    }
+
+    /// Only allow parsing if the result is in range.
+    #[inline]
+    fn in_range<R>(self, range: R) -> InRange<Self, T> where R: RangeBounds<T>, T: Copy {
+        InRange::new(self, range)
+    }
+
+    /// Filter filters the parsed result, failing the parser if the callback returns false.
+    #[inline]
+    fn filter<F>(self, callback: F) -> Where<Self, F, T> where F: Fn(&T) -> bool + Copy {
+        Where::new(self, callback)
+    }
+
+    /// Optimize the parser by requiring that a 'vanguard' parser succeeds before the same input
+    /// is tried on the wrapped parser. This could also be used as a pre-filter for an otherwise
+    /// inexpensive parser.
+    #[inline]
+    fn with_vanguard<PV, TV>(self, vanguard: PV) -> Vanguard<Self, T, PV, TV> where PV: Parser<'i, TV> {
+        Vanguard::new(self, vanguard)
     }
 }
 
