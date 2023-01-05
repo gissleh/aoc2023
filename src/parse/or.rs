@@ -8,6 +8,7 @@ pub struct Or<PL, PR, T> {
 }
 
 impl<PL, PR, T> Or<PL, PR, T> {
+    #[inline]
     pub fn new(parse_left: PL, parse_right: PR) -> Self {
         Self { parse_left, parse_right, spooky_ghost: Default::default() }
     }
@@ -16,6 +17,7 @@ impl<PL, PR, T> Or<PL, PR, T> {
 impl<PL, PR, T> Copy for Or<PL, PR, T> where PL: Copy, PR: Copy {}
 
 impl<PL, PR, T> Clone for Or<PL, PR, T> where PL: Clone, PR: Clone {
+    #[inline]
     fn clone(&self) -> Self {
         Self {
             parse_left: self.parse_left.clone(),
@@ -26,6 +28,7 @@ impl<PL, PR, T> Clone for Or<PL, PR, T> where PL: Clone, PR: Clone {
 }
 
 impl<'i, PL, PR, T> Parser<'i, T> for Or<PL, PR, T> where PL: Parser<'i, T>, PR: Parser<'i, T> {
+    #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(t, new_input) = self.parse_left.parse(input) {
             ParseResult::Good(t, new_input)

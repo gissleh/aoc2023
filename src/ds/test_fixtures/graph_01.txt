@@ -1,0 +1,15 @@
+node A 5000
+node Z 7500
+edge A-Z 32
+edge A=B 7
+edge B-Z 6
+edge C-C 2
+edge C-Z 170
+edge D-Z 9
+edge E=D 11
+edge E=A 119
+edge E=Z 2
+node F 4000
+node D 9000
+node G 12000
+node Z 7600

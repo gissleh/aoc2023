@@ -67,6 +67,7 @@ impl<PL, TL, PR, TR> Clone for AndDiscard<PL, TL, PR, TR> where PL: Clone, PR: C
 
 
 impl<'i, PL, TL, PR, TR> Parser<'i, TL> for AndDiscard<PL, TL, PR, TR> where PL: Parser<'i, TL>, PR: Parser<'i, TR> {
+    #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TL> {
         match self.parse_left.parse(input) {
             ParseResult::Good(vl, input) => match self.parse_right.parse(input) {
@@ -105,6 +106,7 @@ impl<PL, TL, PR, TR> Clone for AndReplace<PL, TL, PR, TR> where PL: Clone, PR: C
 }
 
 impl<'i, PL, TL, PR, TR> Parser<'i, TR> for AndReplace<PL, TL, PR, TR> where PL: Parser<'i, TL>, PR: Parser<'i, TR> {
+    #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TR> {
         match self.parse_left.parse(input) {
             ParseResult::Good(_, input) => match self.parse_right.parse(input) {

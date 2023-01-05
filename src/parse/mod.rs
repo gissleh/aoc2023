@@ -266,6 +266,7 @@ impl<'i, 's, const N: usize> Parser<'i, &'i [u8]> for &'s [u8; N] {
 struct Everything;
 
 impl<'i> Parser<'i, &'i [u8]> for Everything {
+    #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
         let len = input.len();
         if len > 0 {
@@ -280,19 +281,62 @@ impl<'i> Parser<'i, &'i [u8]> for Everything {
 struct Anything;
 
 impl<'i> Parser<'i, &'i [u8]> for Anything {
+    #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
         let len = input.len();
         ParseResult::Good(input, &input[len..])
     }
 }
 
+
+#[derive(Copy, Clone)]
+struct AnyByte;
+
+impl<'i> Parser<'i, u8> for AnyByte {
+    #[inline]
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, u8> {
+        if input.len() >= 1 {
+            ParseResult::Good(input[0], &input[1..])
+        } else {
+            ParseResult::Bad(ParseError::new("Empty input", input))
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+struct NBytes<const N: usize>;
+
+impl<'i, const N: usize> Parser<'i, [u8; N]> for NBytes<N> {
+    #[inline]
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, [u8; N]> {
+        if input.len() >= N {
+            let mut res = [0u8; N];
+            res.copy_from_slice(&input[..N]);
+
+            ParseResult::Good(res, &input[N..])
+        } else {
+            ParseResult::Bad(ParseError::new("Empty input", input))
+        }
+    }
+}
+
+#[inline]
 pub fn everything<'i>() -> impl Parser<'i, &'i [u8]> {
     Everything
 }
 
+#[inline]
 pub fn anything<'i>() -> impl Parser<'i, &'i [u8]> {
     Anything
 }
+
+#[inline]
+pub fn any_byte<'i>() -> impl Parser<'i, u8> {
+    AnyByte
+}
+
+#[inline]
+pub fn n_bytes<'i, const N: usize>() -> impl Parser<'i, [u8; N]> { NBytes::<N> }
 
 #[cfg(test)]
 mod tests {
