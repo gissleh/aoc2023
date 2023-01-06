@@ -320,6 +320,20 @@ impl<'i, const N: usize> Parser<'i, [u8; N]> for NBytes<N> {
     }
 }
 
+#[derive(Copy, Clone)]
+struct BytesUntil(u8, bool);
+
+impl<'i> Parser<'i, &'i [u8]> for BytesUntil {
+    #[inline]
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
+        match input.iter().position(|v| *v == self.0) {
+            Some(pos) => ParseResult::Good(&input[..pos], &input[pos + (self.1 as usize)..]),
+            None => ParseResult::Bad(ParseError::new("Byte not found", input))
+        }
+    }
+}
+
+
 #[inline]
 pub fn everything<'i>() -> impl Parser<'i, &'i [u8]> {
     Everything
@@ -337,6 +351,15 @@ pub fn any_byte<'i>() -> impl Parser<'i, u8> {
 
 #[inline]
 pub fn n_bytes<'i, const N: usize>() -> impl Parser<'i, [u8; N]> { NBytes::<N> }
+
+#[inline]
+pub fn bytes_until<'i>(b: u8, eat: bool) -> impl Parser<'i, &'i [u8]> { BytesUntil(b, eat) }
+
+#[inline]
+pub fn word<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntil(b' ', true).or(line()) }
+
+#[inline]
+pub fn line<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntil(b'\n', true) }
 
 #[cfg(test)]
 mod tests {

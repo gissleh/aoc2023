@@ -156,11 +156,12 @@ struct Node<K, V, E, const CAP: usize> {
 #[cfg(test)]
 mod tests {
     use test::Bencher;
-    use crate::parse::{any_byte, n_bytes, Parser, signed_int, unsigned_int};
+    use crate::parse::{any_byte, bytes_until, n_bytes, Parser, signed_int, unsigned_int};
     use super::*;
 
     const EXAMPLE_01: &[u8] = include_bytes!("./test_fixtures/graph_01.txt");
     const EXAMPLE_2022_DAY16: &[u8] = include_bytes!("./test_fixtures/2022_d16_example.txt");
+    const EXAMPLE_2015_DAY09: &[u8] = include_bytes!("./test_fixtures/2015_d09_example.txt");
 
     fn parse_2022_d16_example() -> Graph<[u8; 2], i32, u8, 4> {
         b"Valve ".and_instead(n_bytes::<2>())
@@ -199,6 +200,26 @@ mod tests {
                 Node { key: *b"JJ", value: 21, edges: ArrayVec::try_from([(2, 1)].as_slice()).unwrap() },
             ]
         });
+    }
+
+    #[test]
+    fn gather_works_on_2015_d09_example() {
+        let graph: Graph<&[u8], (), u32> = bytes_until(b' ', true)
+            .and_discard(b"to ")
+            .and(bytes_until(b' ', true))
+            .and_discard(b"= ")
+            .and(unsigned_int::<u32>())
+            .and_discard(b'\n')
+            .map(|((src, dst), dist)| GraphInstruction::MutualEdge(src, dist, dst))
+            .repeat().parse(EXAMPLE_2015_DAY09).unwrap();
+
+        assert_eq!(graph, Graph {
+            nodes: vec![
+                Node { key: b"London".as_slice(), value: (), edges: ArrayVec::try_from([(1, 464), (2, 518)].as_slice()).unwrap() },
+                Node { key: b"Dublin".as_slice(), value: (), edges: ArrayVec::try_from([(0, 464), (2, 141)].as_slice()).unwrap() },
+                Node { key: b"Belfast".as_slice(), value: (), edges: ArrayVec::try_from([(0, 518), (1, 141)].as_slice()).unwrap() },
+            ]
+        })
     }
 
     #[bench]
