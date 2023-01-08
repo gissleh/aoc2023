@@ -122,7 +122,6 @@ impl<T> GatherTarget<T> for (T, T, T, T, T) where T: Default {
     }
 }
 
-
 impl<T> GatherTarget<T> for (T, T, T, T, T, T) where T: Default {
     fn start_gathering(_size_hint: usize) -> Self { (T::default(), T::default(), T::default(), T::default(), T::default(), T::default()) }
 
@@ -139,4 +138,3 @@ impl<T> GatherTarget<T> for (T, T, T, T, T, T) where T: Default {
         index == 5
     }
 }
-

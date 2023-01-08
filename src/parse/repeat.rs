@@ -88,12 +88,11 @@ impl<'i, PB, PD, TB, TD> Parser<'i, TB> for DelimitedBy<PB, PD, TB, TD> where PB
         self.parser_body.parse(input)
     }
 
-    #[inline]
-    fn parse_into<G>(&self, input: &'i [u8], target: &mut G, index: usize) -> ParseResult<'i, bool> where G: GatherTarget<TB> {
+    fn parse_at_index(&self, input: &'i [u8], index: usize) -> ParseResult<'i, TB> {
         if index > 0 {
             match self.parser_delim.parse(input) {
                 ParseResult::Good(_, new_input) => {
-                    match self.parser_body.parse_into(new_input, target, index) {
+                    match self.parser_body.parse_at_index(new_input, index) {
                         ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Failed to parse body after delimiter", input)),
                         good_res => good_res,
                     }
@@ -101,7 +100,43 @@ impl<'i, PB, PD, TB, TD> Parser<'i, TB> for DelimitedBy<PB, PD, TB, TD> where PB
                 ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Delimiter not found", input))
             }
         } else {
-            self.parser_body.parse_into(input, target, 0)
+            self.parser_body.parse_at_index(input, 0)
+        }
+    }
+}
+
+pub struct Count<P, T> {
+    parser: P,
+    spooky_ghost: PhantomData<T>,
+}
+
+impl<'i, P, T> Count<P, T> where P: Parser<'i, T> {
+    pub fn new(parser: P) -> Self {
+        Self { parser, spooky_ghost: Default::default() }
+    }
+}
+
+impl<P, T> Copy for Count<P, T> where P: Copy {}
+
+impl<P, T> Clone for Count<P, T> where P: Clone {
+    fn clone(&self) -> Self {
+        Self { parser: self.parser.clone(), spooky_ghost: Default::default() }
+    }
+}
+
+impl<'i, P, T> Parser<'i, usize> for Count<P, T> where P: Parser<'i, T> {
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, usize> {
+        match self.parser.parse_at_index(input, 0) {
+            ParseResult::Good(_, mut current_input) => {
+                let mut count = 1;
+                while let ParseResult::Good(_, new_input) = self.parser.parse_at_index(current_input, count) {
+                    current_input = new_input;
+                    count += 1;
+                }
+
+                ParseResult::Good(count, current_input)
+            }
+            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Failed to parse first in Count", input))
         }
     }
 }
@@ -150,6 +185,6 @@ mod tests {
             .repeat()
             .parse(b"1,2,8,64,234,221");
 
-        assert_eq!(v, ParseResult::Good(([1,2,8,64,234,221,0,0], 6), b""));
+        assert_eq!(v, ParseResult::Good(([1, 2, 8, 64, 234, 221, 0, 0], 6), b""));
     }
 }

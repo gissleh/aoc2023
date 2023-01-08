@@ -1,16 +1,21 @@
 use std::fmt::{Display, Formatter};
 use std::ops::RangeBounds;
 
-use repeat::{Repeat, DelimitedBy};
-use skip::{Skip, SkipAll};
+use crate::utils::gather_target::GatherTarget;
+
+pub use int::{signed_int, unsigned_int, digit};
+pub use skip::skip;
+pub use choice::choice;
+
+use repeat::{Repeat, DelimitedBy, Count};
+use skip::{ThenSkip, SkipAll};
 use and::{And, AndReplace, AndDiscard};
 use map::{Map, MapValue};
 use or::Or;
 use filter::{InRange, Where};
-use crate::utils::gather_target::GatherTarget;
-
-pub use int::{signed_int, unsigned_int, digit};
-use crate::parse::vanguard::Vanguard;
+use rewind::Rewind;
+use vanguard::Vanguard;
+use crate::parse::cap::RightCap;
 
 mod repeat;
 mod skip;
@@ -20,6 +25,9 @@ mod int;
 mod map;
 mod filter;
 mod vanguard;
+mod rewind;
+mod cap;
+mod choice;
 
 pub trait Parser<'i, T>: Sized + Copy {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T>;
@@ -41,10 +49,16 @@ pub trait Parser<'i, T>: Sized + Copy {
         ParseResult::Bad(ParseError::new("None were found", input))
     }
 
+    #[inline]
+    #[allow(unused_variables)]
+    fn parse_at_index(&self, input: &'i [u8], index: usize) -> ParseResult<'i, T> {
+        self.parse(input)
+    }
+
     // Parse into this container
     #[inline]
     fn parse_into<G>(&self, input: &'i [u8], target: &mut G, index: usize) -> ParseResult<'i, bool> where G: GatherTarget<T> {
-        match self.parse(input) {
+        match self.parse_at_index(input, index) {
             ParseResult::Good(v, input) => ParseResult::Good(target.gather_into(index, v), input),
             ParseResult::Bad(err) => ParseResult::Bad(err)
         }
@@ -84,6 +98,17 @@ pub trait Parser<'i, T>: Sized + Copy {
         AndDiscard::new(self, rhs)
     }
 
+    /// Rewind the input after parsing this instead of continuing.
+    #[inline]
+    fn rewind(self) -> Rewind<Self, T> {
+        Rewind::new(self)
+    }
+
+    #[inline]
+    fn capped_by<PC, TC>(self, parser: PC) -> RightCap<Self, T, PC, TC> where PC: Parser<'i, TC> {
+        RightCap::new(self, parser)
+    }
+
     /// If this parser fails, it will instead try the other one. It must return the same
     /// type.
     #[inline]
@@ -111,6 +136,11 @@ pub trait Parser<'i, T>: Sized + Copy {
         Repeat::new(self, amount)
     }
 
+    #[inline]
+    fn count_repetitions(self) -> Count<Self, T> {
+        Count::new(self)
+    }
+
     /// This parser does nothing on its own, but it will require a delimiter when paired with
     /// repeat. It is not strict, and will stop adding if it parses short of the delimiter.
     #[inline]
@@ -120,8 +150,8 @@ pub trait Parser<'i, T>: Sized + Copy {
 
     /// Parse this, then skip what comes from parser2.
     #[inline]
-    fn then_skip<P2, T2>(self, parser: P2) -> Skip<Self, P2, T, T2> where P2: Parser<'i, T2> {
-        Skip::new(self, parser)
+    fn then_skip<P2, T2>(self, parser: P2) -> ThenSkip<Self, P2, T, T2> where P2: Parser<'i, T2> {
+        ThenSkip::new(self, parser)
     }
 
     /// Parse this, then skip until the second parses fails.
@@ -138,7 +168,7 @@ pub trait Parser<'i, T>: Sized + Copy {
 
     /// Filter filters the parsed result, failing the parser if the callback returns false.
     #[inline]
-    fn filter<F>(self, callback: F) -> Where<Self, F, T> where F: Fn(&T) -> bool + Copy {
+    fn only_if<F>(self, callback: F) -> Where<Self, F, T> where F: Fn(&T) -> bool + Copy {
         Where::new(self, callback)
     }
 
@@ -255,7 +285,7 @@ impl<'i, 's, const N: usize> Parser<'i, &'i [u8]> for &'s [u8; N] {
 
     #[inline]
     fn first_parsable_in(&self, input: &'i [u8]) -> ParseResult<'i, (&'i [u8], usize)> {
-        match input.windows(N).enumerate().find(|(_, w)| *w == self.as_slice()) {
+        match input.array_windows::<N>().enumerate().find(|(_, w)| w == self) {
             Some((index, data)) => ParseResult::Good((data, index), &input[index + N..]),
             None => ParseResult::Bad(ParseError::new("Byte slice not found in input", input)),
         }
@@ -333,7 +363,6 @@ impl<'i> Parser<'i, &'i [u8]> for BytesUntil {
     }
 }
 
-
 #[inline]
 pub fn everything<'i>() -> impl Parser<'i, &'i [u8]> {
     Everything
@@ -378,6 +407,10 @@ mod tests {
         assert_eq!(
             signed_int::<i32>().first_parsable_in(b"The number is -954923166!"),
             ParseResult::Good((-954923166, 14), b"!"),
+        );
+        assert_eq!(
+            b"\n\n".first_parsable_in(b"Paragraph 1\n\nParagraph 2\n\n"),
+            ParseResult::Good((b"\n\n".as_slice(), 11), b"Paragraph 2\n\n"),
         );
     }
 

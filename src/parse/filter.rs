@@ -121,7 +121,7 @@ mod tests {
 
     #[test]
     fn where_wheres() {
-        let even_parser = signed_int::<i32>().filter(|v| *v > 0 && *v & 1 == 0);
+        let even_parser = signed_int::<i32>().only_if(|v| *v > 0 && *v & 1 == 0);
 
         assert_eq!(even_parser.parse(b"16"), ParseResult::Good(16, b""));
         assert_eq!(even_parser.parse(b"554"), ParseResult::Good(554, b""));
