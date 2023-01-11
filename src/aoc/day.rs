@@ -23,7 +23,7 @@ impl Day {
         }
     }
 
-    pub fn branch_off(&mut self, label: &'static str) {
+    pub fn branch_from(&mut self, label: &'static str) {
         self.tail = Some(self.graph.find(&label).unwrap());
     }
 
@@ -60,6 +60,10 @@ impl Day {
         println!("RESULTS");
         for i in 0..self.graph.len() {
             let (label, (res, _)) = self.graph.node(i).unwrap();
+            if res.as_str() == "$$run_parse$$" {
+                continue;
+            }
+
             if res.chars().find(|c| *c == '\n').is_some() {
                 println!("  {}:\n{}", label, res);
             } else {
@@ -112,8 +116,33 @@ impl Day {
         self.notes.push((label, value.to_string()))
     }
 
-    pub fn run<F, T>(&mut self, label: &'static str, f: F) -> T
-        where F: Fn() -> T, T: Display {
+    pub fn part<F, T>(&mut self, label: &'static str, f: F) -> T where F: Fn() -> T, T: Display {
+        let (res, dur) = self.run(f);
+
+        let new_tail = self.graph.create_node(label, (res.to_string(), dur));
+        if let Some(tail) = self.tail {
+            self.graph.connect(tail, new_tail, ());
+        }
+
+        self.tail = Some(new_tail);
+
+        res
+    }
+
+    pub fn prep<F, T>(&mut self, label: &'static str, f: F) -> T where F: Fn() -> T {
+        let (res, dur) = self.run(f);
+
+        let new_tail = self.graph.create_node(label, (String::from("$$run_parse$$"), dur));
+        if let Some(tail) = self.tail {
+            self.graph.connect(tail, new_tail, ());
+        }
+
+        self.tail = Some(new_tail);
+
+        res
+    }
+
+    fn run<F, T>(&mut self, f: F) -> (T, i64) where F: Fn() -> T {
         let before = Instant::now();
         let res = f();
         let after = Instant::now();
@@ -126,8 +155,8 @@ impl Day {
             10..=19 => 50,
             20..=49 => 20,
             50..=99 => 10,
-            100..=499 => 5,
-            500..=999 => 2,
+            100..=299 => 4,
+            300..=499 => 2,
             _ => 0
         };
         let mut dur = dur.whole_nanoseconds() as i64;
@@ -140,12 +169,6 @@ impl Day {
             dur = ((after - before).whole_nanoseconds() as i64) / (runs as i64);
         }
 
-        let new_tail = self.graph.create_node(label, (res.to_string(), dur));
-        if let Some(tail) = self.tail {
-            self.graph.connect(tail, new_tail, ());
-        }
-        self.tail = Some(new_tail);
-
-        res
+        (res, dur)
     }
 }
