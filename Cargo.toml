@@ -10,9 +10,10 @@ path = "src/lib.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.6"
+chrono = "0.4.23"
 hashbrown = "0.13.1"
-time = "0.1.40"
+time = "0.3.17"
+reqwest = { version = "0.11.13", features = ["blocking"] }
 num = { version = "0.4.0" }
 rustc-hash = "1.1.0"
 smallvec = { version = "1.10.0", features = ["specialization"] }
