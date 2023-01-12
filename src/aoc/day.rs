@@ -14,10 +14,14 @@ pub struct Day {
 
 impl Day {
     pub fn new(day: u32, run_once: bool) -> Self {
+        let mut graph = Graph::with_capacity(8);
+        graph.create_node("$$root$$", ("$$run_parse$$".to_owned(), 0));
+        graph.create_node("$$dead_end$$", ("$$run_parse$$".to_owned(), 0));
+
         Self {
-            graph: Graph::with_capacity(8),
+            graph,
             notes: Vec::with_capacity(8),
-            tail: None,
+            tail: Some(0),
             day,
             run_once,
         }
@@ -76,6 +80,10 @@ impl Day {
             println!("TIMES");
             for i in 0..self.graph.len() {
                 let (label, (_, dur)) = self.graph.node(i).unwrap();
+                if label.starts_with("$$") {
+                    continue;
+                }
+
                 println!("  {}: {}", label, format_duration(*dur));
             }
             let (_, shortest_time) = self.shortest_time();
@@ -93,8 +101,14 @@ impl Day {
         search.push_state((0, Vec::new(), 0));
 
         let results: Vec<_> = search.gather(|s, (index, mut steps, total)| {
-            let (_, (_, dur)) = self.graph.node(index).unwrap();
-            steps.push(*dur);
+            let (label, (_, dur)) = self.graph.node(index).unwrap();
+            if *label == "$$dead_end$$" {
+                return None;
+            }
+
+            if index > 0 {
+                steps.push(*dur);
+            }
             let total_dur = total + *dur;
             let mut had_edges = false;
             for (_, next_index, _) in self.graph.edges_from(index) {
@@ -114,6 +128,11 @@ impl Day {
 
     pub fn note<T>(&mut self, label: &'static str, value: T) where T: Display {
         self.notes.push((label, value.to_string()))
+    }
+
+    pub fn mark_dead_end(&mut self) {
+        self.graph.connect(self.tail.unwrap(), 1, ());
+        self.tail = Some(0);
     }
 
     pub fn part<F, T>(&mut self, label: &'static str, f: F) -> T where F: Fn() -> T, T: Display {

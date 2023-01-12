@@ -1,14 +1,24 @@
 use crate::utils::gather_target::GatherTarget;
 pub use bfs::bfs;
 pub use dfs::dfs;
+pub use dijkstra::{dijkstra, DijkstraState};
+pub use utils::WithCost;
 
+mod utils;
 mod bfs;
 mod dfs;
+mod dijkstra;
 
 pub trait Search<S>: Sized {
     fn reset(&mut self, initial_state: S);
     fn next_state(&mut self) -> Option<S>;
     fn push_state(&mut self, state: S);
+
+    ///
+    fn with_initial_state(mut self, initial_state: S) -> Self {
+        self.reset(initial_state);
+        self
+    }
 
     /// Find the next state that returns Some(R) from the callback. This function will not
     /// reset the state between runs, and you could continue where you left off by calling it

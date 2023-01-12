@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use std::simd::{Simd, SimdElement};
+use num::One;
 
 pub struct Point<T> (Simd<T, 2>) where T: SimdElement;
 
@@ -19,6 +20,27 @@ impl<T> Point<T> where T: SimdElement {
     #[inline(always)]
     pub fn coords_mut(&mut self) -> &mut [T; 2] {
         self.0.as_mut_array()
+    }
+}
+
+impl<T> Point<T> where T: SimdElement, T: Copy + Add<Output=T> + Sub<Output=T> {
+    #[inline]
+    pub fn cardinals_offset(&self, offset: T) -> [Point<T>; 4] {
+        let [x, y] = *self.coords();
+
+        [
+            Point::new(x, y - offset),
+            Point::new(x - offset, y),
+            Point::new(x + offset, y),
+            Point::new(x, y + offset),
+        ]
+    }
+}
+
+impl<T> Point<T> where T: SimdElement, T: Copy + Add<Output=T> + Sub<Output=T> + One {
+    #[inline]
+    pub fn cardinals(&self) -> [Point<T>; 4] {
+        self.cardinals_offset(T::one())
     }
 }
 

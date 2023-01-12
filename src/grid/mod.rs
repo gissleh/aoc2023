@@ -6,7 +6,7 @@ use crate::utils::gather_target::GatherTarget;
 
 mod storage;
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub struct Grid<T, S = Vec<T>> {
     storage: S,
     default: T,
@@ -19,6 +19,34 @@ impl<T, S> Grid<T, S> where S: GridStorage<T> {
     fn point_to_index(&self, p: &Point<usize>) -> usize {
         let [x, y] = p.coords();
         (y * self.width) + x
+    }
+
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item=(Point<usize>, &T)> {
+        self.storage.cell_range(0, self.width * self.height)
+            .iter()
+            .enumerate()
+            .map(|(i, v)| (Point::new(i % self.width, i / self.width), v))
+    }
+}
+
+impl<T, S> Grid<T, S> where S: GridStorage<T> {
+    #[inline]
+    pub fn count_by<F>(&self, pred: F) -> usize where F: Fn(&T) -> bool {
+        self.storage.cell_range(0, self.width * self.height)
+            .iter()
+            .filter(|c| pred(*c))
+            .count()
+    }
+}
+
+impl<T, S> Grid<T, S> where S: GridStorage<T>, T: Eq {
+    #[inline]
+    pub fn find(&self, needle: &T) -> Option<Point<usize>> {
+        self.storage.cell_range(0, self.width * self.height)
+            .iter()
+            .position(|c| c.eq(needle))
+            .map(|p| Point::new(p % self.width, p / self.width))
     }
 }
 
@@ -33,6 +61,7 @@ impl<T, S> Grid<T, S> where S: GridStorage<T> + GatherTarget<T>, T: Copy {
     #[inline]
     pub fn parser_with_default<'i, P>(def: T, cell_parser: P) -> impl Parser<'i, Self> where P: Parser<'i, T> {
         cell_parser.count_repetitions()
+            .capped_by(b'\n')
             .rewind()
             .and(everything().capped_by(b"\n\n").or(everything()))
             .map(move |(width, mut body)| {
@@ -47,6 +76,10 @@ impl<T, S> Grid<T, S> where S: GridStorage<T> + GatherTarget<T>, T: Copy {
                 let mut offset = 0;
 
                 while let ParseResult::Good(mut line, new_body) = line_parser.parse(body) {
+                    if line.len() == 0 {
+                        break;
+                    }
+
                     let mut index = 0;
                     while let ParseResult::Good(v, new_line) = cell_parser.parse_at_index(line, index) {
                         storage[offset + index] = v;
