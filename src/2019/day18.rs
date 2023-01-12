@@ -11,15 +11,16 @@ type MazeGraph = Graph<Maze, Point<usize>, (u32, u32, u32), 32>;
 
 pub fn main(day: &mut Day, input: &[u8]) {
     let grid_p1 = day.prep("Parse Grid", || parse_grid(input));
-    let grid_p2 = day.prep("Update Grid", || change_grid_for_p2(&grid_p1));
 
     day.part("Part 1 (Naive)", || p1_naive(&grid_p1));
     day.mark_dead_end();
 
-    day.branch_from("Update Grid");
+    day.branch_from("Parse Grid");
     let graph_p1 = day.prep("Build Graph 1", || build_graph(&grid_p1));
     day.part("Part 1 (Graph)", || p1_graph(&graph_p1));
-    let _graph_p2 = day.prep("Build Graph 2", || build_graph(&grid_p2));
+    let grid_p2 = day.prep("Update Grid", || change_grid_for_p2(&grid_p1));
+    let graph_p2 = day.prep("Build Graph 2", || build_graph(&grid_p2));
+    day.part("Part 2 (Graph)", || p2_graph(&graph_p2));
 }
 
 fn p1_graph(graph: &MazeGraph) -> u32 {
@@ -50,6 +51,44 @@ fn p1_graph(graph: &MazeGraph) -> u32 {
         }).unwrap()
 }
 
+fn p2_graph(graph: &MazeGraph) -> u32 {
+    let initial_pos_array: ArrayVec<usize, 4> = graph.nodes()
+        .filter(|(_, m, ..)| **m == Maze::Entrance)
+        .map(|(i, ..)| i)
+        .collect();
+    let mut initial_pos = [0usize; 4];
+    for (i, pos) in initial_pos_array.iter().enumerate() {
+        initial_pos[i] = *pos;
+    }
+
+    let initial_state = State { pos: initial_pos, keys: 0 };
+    let target_mask = (1 << (graph.len() - 4)) - 1;
+
+    dijkstra()
+        .with_initial_state(WithCost(initial_state, 0))
+        .find(|dijkstra, WithCost(state, steps)| {
+            for (i, pos) in state.pos.iter().enumerate() {
+                for ((distance, keys_required, keys_grabbed), next, _) in graph.edges_from(*pos) {
+                    if state.keys & *keys_required == *keys_required {
+                        let mut state = state;
+
+                        state.pos[i] = *next;
+                        state.keys |= keys_grabbed;
+                        let steps = steps + *distance;
+
+                        if state.keys == target_mask {
+                            return Some(steps);
+                        }
+
+                        dijkstra.push_state(WithCost(state, steps));
+                    }
+                }
+            }
+
+            None
+        }).unwrap()
+}
+
 fn build_graph(grid: &MazeGrid) -> MazeGraph {
     let mut graph = Graph::with_capacity(32);
 
@@ -66,7 +105,7 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
         bfs.reset(WithCost(*pos, (0, 0, 0)));
 
         let edges: ArrayVec<(Maze, u32, u32, u32), 32> = bfs.gather(|bfs, state| {
-            let WithCost((pos), (steps, mut keys_required, mut keys_found)) = state;
+            let WithCost(pos, (steps, mut keys_required, mut keys_found)) = state;
 
             let mut res = None;
 
@@ -89,8 +128,6 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
 
             res
         });
-
-        assert!(!edges.is_full());
 
         for (cell, steps, keys_required, keys_found) in edges {
             graph.connect(i, graph.find(&cell).unwrap(), (steps, keys_required, keys_found));
@@ -163,10 +200,6 @@ fn p2_naive(grid: &MazeGrid) -> u32 {
 
     bfs().with_initial_state(WithCost(initial_state, 0))
         .find(|bfs, WithCost(mut state, steps)| {
-            if steps % 10 == 0 {
-                println!("{}", steps);
-            }
-
             for pos in state.pos.iter() {
                 match grid[*pos] {
                     Maze::Wall => { return None; }

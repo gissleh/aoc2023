@@ -40,8 +40,14 @@ impl Day {
         let (steps, total) = self.shortest_time();
 
         print!("{: >10} |", format_duration(total));
-        for step in steps.iter() {
-            print!("{: >10}", format_duration(*step));
+        for (step_label, step_time) in steps.iter() {
+            let abbr = step_label.split(' ')
+                .map(|w| w.chars().next().unwrap().to_ascii_lowercase())
+                .filter(|c| *c != '(')
+                .collect::<String>();
+
+
+            print!("{: >16}", format!("{}={}", abbr, format_duration(*step_time)));
         }
 
         println!();
@@ -92,12 +98,12 @@ impl Day {
         }
     }
 
-    pub fn shortest_time(&self) -> (Vec<i64>, i64) {
+    pub fn shortest_time(&self) -> (Vec<(&'static str, i64)>, i64) {
         if self.graph.len() == 0 {
             return (Vec::new(), i64::MAX);
         }
 
-        let mut search = dfs::<(usize, Vec<i64>, i64)>();
+        let mut search = dfs::<(usize, Vec<(&'static str, i64)>, i64)>();
         search.push_state((0, Vec::new(), 0));
 
         let results: Vec<_> = search.gather(|s, (index, mut steps, total)| {
@@ -107,7 +113,7 @@ impl Day {
             }
 
             if index > 0 {
-                steps.push(*dur);
+                steps.push((*label, *dur));
             }
             let total_dur = total + *dur;
             let mut had_edges = false;

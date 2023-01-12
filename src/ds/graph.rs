@@ -35,6 +35,13 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> {
     }
 
     #[inline(always)]
+    pub fn nodes(&self) -> impl Iterator<Item=(usize, &K, &V)> {
+        self.nodes.iter()
+            .enumerate()
+            .map(|(i, n)| (i, &n.key, &n.value))
+    }
+
+    #[inline(always)]
     pub fn find_by<F>(&self, pred: F) -> Option<usize> where F: Fn(&K) -> bool {
         self.nodes.iter().position(|n| pred(&n.key))
     }
