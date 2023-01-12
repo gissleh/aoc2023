@@ -82,10 +82,8 @@ pub trait DijkstraState<C: Ord + Eq, K: Hash + Eq>: Clone {
 /// Run dijkstra search. The state needs to implement DijkstraState<T> and is not interchangeable
 /// with bfs and dfs without changing up how costs and such are handled.
 pub fn dijkstra<C, K, S>() -> impl Search<S> where C: Ord + Eq, K: Hash + Eq, S: DijkstraState<C, K> {
-    let mut dijkstra = Dijkstra {
+    Dijkstra {
         seen: HashMap::default(),
         open: BinaryHeap::with_capacity(128),
-    };
-
-    dijkstra
+    }
 }

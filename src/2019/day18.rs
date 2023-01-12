@@ -7,7 +7,7 @@ use common::parse::{Parser, any_byte};
 use common::search::{Search, bfs, WithCost, dijkstra};
 
 type MazeGrid = Grid<Maze, [Maze; 8192]>;
-type MazeGraph = Graph<Maze, Point<usize>, (u32, u32, u32), 256>;
+type MazeGraph = Graph<Maze, Point<usize>, (u32, u32, u32), 32>;
 
 pub fn main(day: &mut Day, input: &[u8]) {
     let grid_p1 = day.prep("Parse Grid", || parse_grid(input));
@@ -18,8 +18,8 @@ pub fn main(day: &mut Day, input: &[u8]) {
 
     day.branch_from("Update Grid");
     let graph_p1 = day.prep("Build Graph 1", || build_graph(&grid_p1));
-    let graph_p2 = day.prep("Build Graph 2", || build_graph(&grid_p2));
     day.part("Part 1 (Graph)", || p1_graph(&graph_p1));
+    let _graph_p2 = day.prep("Build Graph 2", || build_graph(&grid_p2));
 }
 
 fn p1_graph(graph: &MazeGraph) -> u32 {
@@ -29,7 +29,7 @@ fn p1_graph(graph: &MazeGraph) -> u32 {
 
     dijkstra()
         .with_initial_state(WithCost(initial_state, 0))
-        .find(|dijkstra, WithCost(mut state, steps)| {
+        .find(|dijkstra, WithCost(state, steps)| {
             for ((distance, keys_required, keys_grabbed), next, _) in graph.edges_from(state.pos) {
                 if state.keys & *keys_required == *keys_required {
                     let mut state = state;
@@ -63,14 +63,10 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
     let mut bfs = bfs();
     for i in 0..graph.len() {
         let (_, pos) = graph.node(i).unwrap();
-        bfs.reset(WithCost((*pos, 0), (0, 0)));
+        bfs.reset(WithCost(*pos, (0, 0, 0)));
 
-        let edges: ArrayVec<(Maze, u32, u32, u32), 256> = bfs.gather(|bfs, state| {
-            let WithCost((pos, mut keys_required), (steps, mut keys_found)) = state;
-
-            if steps == 600 {
-                return None;
-            }
+        let edges: ArrayVec<(Maze, u32, u32, u32), 32> = bfs.gather(|bfs, state| {
+            let WithCost((pos), (steps, mut keys_required, mut keys_found)) = state;
 
             let mut res = None;
 
@@ -78,25 +74,17 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
                 Maze::Wall => { return None; }
                 Maze::Floor => {}
                 Maze::Key(mask) => {
-                    if (keys_found | keys_required) & mask == mask {
-                        return None;
-                    }
-
                     keys_found |= mask;
                     res = Some((Maze::Key(mask), steps, keys_required, keys_found));
                 }
                 Maze::Door(mask) => {
-                    if keys_required & mask == mask {
-                        return None;
-                    }
-
                     keys_required |= mask;
                 }
                 Maze::Entrance => {}
             }
 
             for pos in pos.cardinals() {
-                bfs.push_state(WithCost((pos, keys_required), (steps + 1, keys_found)));
+                bfs.push_state(WithCost(pos, (steps + 1, keys_required, keys_found)));
             }
 
             res
