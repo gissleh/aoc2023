@@ -12,9 +12,9 @@ mod dijkstra;
 pub trait Search<S>: Sized {
     fn reset(&mut self, initial_state: S);
     fn next_state(&mut self) -> Option<S>;
-    fn push_state(&mut self, state: S);
+    fn add_state(&mut self, state: S);
 
-    ///
+    /// Reset the search with this new state.
     fn with_initial_state(mut self, initial_state: S) -> Self {
         self.reset(initial_state);
         self
@@ -86,10 +86,10 @@ pub(crate) mod tests {
                 return None;
             }
 
-            search.push_state(Point::new(x, y - 1));
-            search.push_state(Point::new(x - 1, y));
-            search.push_state(Point::new(x + 1, y));
-            search.push_state(Point::new(x, y + 1));
+            search.add_state(Point::new(x, y - 1));
+            search.add_state(Point::new(x - 1, y));
+            search.add_state(Point::new(x + 1, y));
+            search.add_state(Point::new(x, y + 1));
 
             if ch != b'.' {
                 Some((ch as char, p))

@@ -1,4 +1,4 @@
-use crate::parse::{ParseError, Parser, ParseResult};
+use crate::parse::{Parser, ParseResult};
 
 pub trait Choices<'i, T>: Copy + Clone {
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T>;
@@ -13,7 +13,7 @@ impl<'i, const N: usize, T, P: Parser<'i, T>> Choices<'i, T> for [P; N] {
             }
         }
 
-        ParseResult::Bad(ParseError::new("No choice matched", input))
+        ParseResult::new_bad("No choices matched")
     }
 }
 
@@ -27,7 +27,7 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>> Choices<'i, T> for (P1, P2) {
         } else if let ParseResult::Good(v, input) = self.1.parse(input) {
             ParseResult::Good(v, input)
         } else {
-            ParseResult::Bad(ParseError::new("No choice matched", input))
+            ParseResult::new_bad("No choices matched")
         }
     }
 }
@@ -42,7 +42,7 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>> Choices<'i,
         } else if let ParseResult::Good(v, input) = self.2.parse(input) {
             ParseResult::Good(v, input)
         } else {
-            ParseResult::Bad(ParseError::new("No choice matched", input))
+            ParseResult::new_bad("No choices matched")
         }
     }
 }
@@ -59,7 +59,7 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
         } else if let ParseResult::Good(v, input) = self.3.parse(input) {
             ParseResult::Good(v, input)
         } else {
-            ParseResult::Bad(ParseError::new("No choice matched", input))
+            ParseResult::new_bad("No choices matched")
         }
     }
 }
@@ -78,7 +78,7 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
         } else if let ParseResult::Good(v, input) = self.4.parse(input) {
             ParseResult::Good(v, input)
         } else {
-            ParseResult::Bad(ParseError::new("No choice matched", input))
+            ParseResult::new_bad("No choices matched")
         }
     }
 }
@@ -99,7 +99,7 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
         } else if let ParseResult::Good(v, input) = self.5.parse(input) {
             ParseResult::Good(v, input)
         } else {
-            ParseResult::Bad(ParseError::new("No choice matched", input))
+            ParseResult::new_bad("No choices matched")
         }
     }
 }
@@ -122,7 +122,7 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
         } else if let ParseResult::Good(v, input) = self.6.parse(input) {
             ParseResult::Good(v, input)
         } else {
-            ParseResult::Bad(ParseError::new("No choice matched", input))
+            ParseResult::new_bad("No choices matched")
         }
     }
 }
@@ -147,7 +147,7 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
         } else if let ParseResult::Good(v, input) = self.7.parse(input) {
             ParseResult::Good(v, input)
         } else {
-            ParseResult::Bad(ParseError::new("No choice matched", input))
+            ParseResult::new_bad("No choices matched")
         }
     }
 }

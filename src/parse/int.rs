@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use std::ops::{AddAssign, MulAssign, Neg};
-use crate::parse::{ParseError, Parser, ParseResult};
+use crate::parse::{Parser, ParseResult};
 
 #[derive(Copy, Clone)]
 struct Digit<T> (PhantomData<T>);
@@ -9,9 +9,9 @@ impl<'i, T> Parser<'i, T> for Digit<T> where T: Copy + From<u8> {
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if input.len() == 0 {
-            ParseResult::Bad(ParseError::new("Digit parsed empty number", input))
+            ParseResult::new_bad("Digit parsed empty number")
         } else if input[0] < b'0' || input[0] > b'9' {
-            ParseResult::Bad(ParseError::new("Digit parsed non-number", input))
+            ParseResult::new_bad("Digit parsed non-number")
         } else {
             ParseResult::Good(T::from(input[0] - b'0'), &input[1..])
         }
@@ -30,13 +30,13 @@ impl<'i, T> Parser<'i, T> for SignedInt<T> where T: Copy + From<u8> + MulAssign 
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if input.len() == 0 {
-            return ParseResult::Bad(ParseError::new("SignedInt parsed empty number", input));
+            return ParseResult::new_bad("SignedInt parsed empty number");
         }
 
         let mut current_input = input;
         let negative = if current_input[0] == b'-' {
             if input.len() == 1 {
-                return ParseResult::Bad(ParseError::new("SignedInt parsed only negative sign", input));
+                return ParseResult::new_bad("SignedInt parsed only negative sign");
             }
 
             current_input = &current_input[1..];
@@ -46,12 +46,12 @@ impl<'i, T> Parser<'i, T> for SignedInt<T> where T: Copy + From<u8> + MulAssign 
         };
 
         if input.len() == 0 {
-            return ParseResult::Bad(ParseError::new("SignedInt parsed empty number", input));
+            return ParseResult::new_bad("SignedInt parsed empty number");
         }
 
         let ch = current_input[0];
         if ch < b'0' || ch > b'9' {
-            return ParseResult::Bad(ParseError::new("SignedInt parsed non-number", input));
+            return ParseResult::new_bad("SignedInt parsed non-number");
         }
         let mut v = T::from(ch - b'0');
         let ten = T::from(10u8);
@@ -84,14 +84,14 @@ impl<'i, T> Parser<'i, T> for UnsignedInt<T> where T: Copy + From<u8> + MulAssig
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if input.len() == 0 {
-            return ParseResult::Bad(ParseError::new("UnsignedInt parsed empty number", input));
+            return ParseResult::new_bad("UnsignedInt parsed empty number");
         }
 
         let mut current_input = input;
 
         let ch = current_input[0];
         if ch < b'0' || ch > b'9' {
-            return ParseResult::Bad(ParseError::new("UnsignedInt parsed non-number", input));
+            return ParseResult::new_bad("UnsignedInt parsed non-number");
         }
         let mut v = T::from(ch - b'0');
         let ten = T::from(10u8);
@@ -162,39 +162,27 @@ mod tests {
     fn parse_int_throws_the_right_errors() {
         assert_eq!(
             digit::<i16>().parse(b""),
-            ParseResult::Bad(
-                ParseError::new("Digit parsed empty number", b"")
-            )
+            ParseResult::new_bad("Digit parsed empty number")
         );
         assert_eq!(
             digit::<i16>().parse(b"z"),
-            ParseResult::Bad(
-                ParseError::new("Digit parsed non-number", b"z")
-            )
+            ParseResult::new_bad("Digit parsed non-number")
         );
         assert_eq!(
             signed_int::<i16>().parse(b"minus two"),
-            ParseResult::Bad(
-                ParseError::new("SignedInt parsed non-number", b"minus two")
-            )
+            ParseResult::new_bad("SignedInt parsed non-number")
         );
         assert_eq!(
             signed_int::<i16>().parse(b"-"),
-            ParseResult::Bad(
-                ParseError::new("SignedInt parsed only negative sign", b"-")
-            )
+            ParseResult::new_bad("SignedInt parsed only negative sign")
         );
         assert_eq!(
             unsigned_int::<u16>().parse(b"-12"),
-            ParseResult::Bad(
-                ParseError::new("UnsignedInt parsed non-number", b"-12")
-            )
+            ParseResult::new_bad("UnsignedInt parsed non-number")
         );
         assert_eq!(
             signed_int::<i16>().parse(b""),
-            ParseResult::Bad(
-                ParseError::new("SignedInt parsed empty number", b"")
-            )
+            ParseResult::new_bad("SignedInt parsed empty number")
         );
     }
 }

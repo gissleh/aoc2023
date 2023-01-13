@@ -28,7 +28,7 @@ impl<C, H, S> Search<S> for Dijkstra<C, H, S> where C: Ord + Eq, H: Hash + Eq + 
         self.open.pop().map(|DijkstraStep(_, s, _)| s)
     }
 
-    fn push_state(&mut self, state: S) {
+    fn add_state(&mut self, state: S) {
         let seen_key = state.key();
         let step_cost = state.cost();
 

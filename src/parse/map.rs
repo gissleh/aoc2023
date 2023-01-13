@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use crate::parse::{ParseError, Parser, ParseResult};
+use crate::parse::{Parser, ParseResult};
 
 pub struct Map<P, F, TP, TF> {
     parser: P,
@@ -105,7 +105,7 @@ impl<'i, P, F, TP, TF> Parser<'i, TF> for FilterMap<P, F, TP, TF>
         match self.parser.parse(input) {
             ParseResult::Good(vp, new_input) => match (self.mapper_fn)(vp) {
                 Some(vf) => ParseResult::Good(vf, new_input),
-                None => ParseResult::Bad(ParseError::new("FilterMap function returned None", input))
+                None => ParseResult::new_bad("FilterMap function returned None")
             }
             ParseResult::Bad(err) => ParseResult::Bad(err),
         }
@@ -128,6 +128,9 @@ mod tests {
             b'#' => Some(999),
             _ => None,
         });
+
+        assert_eq!(parser_1.parse(b"X"), ParseResult::Good(223, b""));
+        assert_eq!(parser_1.parse(b"."), ParseResult::new_bad("FilterMap function returned None"));
 
         assert_eq!(
             parser_1.repeat().parse(b"123#abZ.aa"),

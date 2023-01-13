@@ -5,9 +5,9 @@ use crate::search::DijkstraState;
 #[derive(Copy, Clone)]
 pub struct WithCost<S, C>(pub S, pub C);
 
-impl<S, C> DijkstraState<C, S> for WithCost<S, C> where C: Ord + Eq + Clone, S: Hash + Eq + Clone {
+impl<S, C> DijkstraState<C, S> for WithCost<S, C> where C: Ord + Eq + Copy, S: Hash + Eq + Clone {
     fn cost(&self) -> C {
-        self.1.clone()
+        self.1
     }
 
     fn key(&self) -> S {

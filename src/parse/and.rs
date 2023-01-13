@@ -32,9 +32,9 @@ impl<'i, PL, TL, PR, TR> Parser<'i, (TL, TR)> for And<PL, TL, PR, TR> where PL: 
         match self.parse_left.parse(input) {
             ParseResult::Good(vl, input) => match self.parse_right.parse(input) {
                 ParseResult::Good(vr, input) => ParseResult::Good((vl, vr), input),
-                ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Right in And failed", input))
+                ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Right in And failed")
             },
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Left in And failed", input))
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Left in And failed")
         }
     }
 }
@@ -72,9 +72,9 @@ impl<'i, PL, TL, PR, TR> Parser<'i, TL> for AndDiscard<PL, TL, PR, TR> where PL:
         match self.parse_left.parse(input) {
             ParseResult::Good(vl, input) => match self.parse_right.parse(input) {
                 ParseResult::Good(_, input) => ParseResult::Good(vl, input),
-                ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Right in And failed", input))
+                ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Right in And failed")
             },
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Left in And failed", input))
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Left in And failed")
         }
     }
 }
@@ -111,9 +111,9 @@ impl<'i, PL, TL, PR, TR> Parser<'i, TR> for AndReplace<PL, TL, PR, TR> where PL:
         match self.parse_left.parse(input) {
             ParseResult::Good(_, input) => match self.parse_right.parse(input) {
                 ParseResult::Good(vr, input) => ParseResult::Good(vr, input),
-                ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Right in And failed", input))
+                ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Right in And failed")
             },
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Left in And failed", input))
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Left in And failed")
         }
     }
 }

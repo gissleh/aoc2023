@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use crate::parse::{ParseError, Parser, ParseResult};
+use crate::parse::{Parser, ParseResult};
 use crate::utils::gather_target::GatherTarget;
 
 pub struct Repeat<P, T, G> {
@@ -42,7 +42,7 @@ impl<'i, P, T, G> Parser<'i, G> for Repeat<P, T, G> where P: Parser<'i, T>, G: G
                     index += 1;
                     if full {
                         if self.amount != 0 && index != self.amount {
-                            return ParseResult::Bad(ParseError::new("Container was full before amount was met.", input));
+                            return ParseResult::new_bad("Container was full before amount was met.");
                         }
 
                         break;
@@ -53,7 +53,7 @@ impl<'i, P, T, G> Parser<'i, G> for Repeat<P, T, G> where P: Parser<'i, T>, G: G
 
                 ParseResult::Good(target, current_input)
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Failed to parse first in Repeat", input))
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in Repeat")
         }
     }
 }
@@ -93,11 +93,11 @@ impl<'i, PB, PD, TB, TD> Parser<'i, TB> for DelimitedBy<PB, PD, TB, TD> where PB
             match self.parser_delim.parse(input) {
                 ParseResult::Good(_, new_input) => {
                     match self.parser_body.parse_at_index(new_input, index) {
-                        ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Failed to parse body after delimiter", input)),
+                        ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse body after delimiter"),
                         good_res => good_res,
                     }
                 }
-                ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Delimiter not found", input))
+                ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Delimiter not found")
             }
         } else {
             self.parser_body.parse_at_index(input, 0)
@@ -136,7 +136,7 @@ impl<'i, P, T> Parser<'i, usize> for Count<P, T> where P: Parser<'i, T> {
 
                 ParseResult::Good(count, current_input)
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Failed to parse first in Count", input))
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in Count")
         }
     }
 }

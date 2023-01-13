@@ -21,7 +21,7 @@ impl<'i, P, T> Parser<'i, Option<T>> for Skip<P, T> where P: Parser<'i, T> {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, Option<T>> {
         match self.parser.parse(input) {
             ParseResult::Good(v, input) => ParseResult::Good(Some(v), input),
-            ParseResult::Bad(err) => ParseResult::Good(None, err.input),
+            ParseResult::Bad(_) => ParseResult::Good(None, input),
         }
     }
 }

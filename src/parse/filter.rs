@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
-use crate::parse::{ParseError, Parser, ParseResult};
+use crate::parse::{Parser, ParseResult};
 
 pub struct Filter<P, F, T> {
     parser: P,
@@ -36,7 +36,7 @@ impl<'i, P, F, T> Parser<'i, T> for Filter<P, F, T> where P: Parser<'i, T>, F: F
                 if (self.callback)(&t) {
                     ParseResult::Good(t, new_input)
                 } else {
-                    ParseResult::Bad(ParseError::new("Filter rejected parsed result", input))
+                    ParseResult::new_bad("Filter rejected parsed result")
                 }
             }
             bad_result => bad_result,
@@ -75,16 +75,12 @@ impl<'i, P, T> Parser<'i, T> for InRange<P, T> where P: Parser<'i, T>, T: Ord + 
                     Bound::Unbounded => {}
                     Bound::Excluded(l) => {
                         if v <= l {
-                            return ParseResult::Bad(
-                                ParseError::new("Value too low", input),
-                            );
+                            return ParseResult::new_bad("Value too low");
                         }
                     }
                     Bound::Included(l) => {
                         if v < l {
-                            return ParseResult::Bad(
-                                ParseError::new("Value too low", input),
-                            );
+                            return ParseResult::new_bad("Value too low");
                         }
                     }
                 }
@@ -93,23 +89,19 @@ impl<'i, P, T> Parser<'i, T> for InRange<P, T> where P: Parser<'i, T>, T: Ord + 
                     Bound::Unbounded => {}
                     Bound::Excluded(l) => {
                         if v >= l {
-                            return ParseResult::Bad(
-                                ParseError::new("Value too high", input),
-                            );
+                            return ParseResult::new_bad("Value too high");
                         }
                     }
                     Bound::Included(l) => {
                         if v > l {
-                            return ParseResult::Bad(
-                                ParseError::new("Value too high", input),
-                            );
+                            return ParseResult::new_bad("Value too high");
                         }
                     }
                 }
 
                 ParseResult::Good(v, new_input)
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Parser failed before range was involved", input)),
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Parser failed before range was involved"),
         }
     }
 }
@@ -117,16 +109,16 @@ impl<'i, P, T> Parser<'i, T> for InRange<P, T> where P: Parser<'i, T>, T: Ord + 
 #[cfg(test)]
 mod tests {
     use crate::parse::filter::InRange;
-    use crate::parse::{ParseError, Parser, ParseResult, signed_int};
+    use crate::parse::{Parser, ParseResult, signed_int};
 
     #[test]
-    fn where_wheres() {
+    fn only_if_onlies_and_iffs() {
         let even_parser = signed_int::<i32>().only_if(|v| *v > 0 && *v & 1 == 0);
 
         assert_eq!(even_parser.parse(b"16"), ParseResult::Good(16, b""));
         assert_eq!(even_parser.parse(b"554"), ParseResult::Good(554, b""));
         assert_eq!(even_parser.parse(b"one"), signed_int::<i32>().parse(b"one"), "Should return the same as just passing it through.");
-        assert_eq!(even_parser.parse(b"13"), ParseResult::Bad(ParseError::new("Filter rejected parsed result", b"13")));
+        assert_eq!(even_parser.parse(b"13"), ParseResult::new_bad("Filter rejected parsed result"));
     }
 
     #[test]
@@ -134,15 +126,15 @@ mod tests {
         let r = InRange::new(signed_int::<i32>(), 0..64);
 
         assert_eq!(r.parse(b"42"), ParseResult::Good(42, b""));
-        assert_eq!(r.parse(b"-119"), ParseResult::Bad(ParseError::new("Value too low", b"-119")));
-        assert_eq!(r.parse(b"-1"), ParseResult::Bad(ParseError::new("Value too low", b"-1")));
+        assert_eq!(r.parse(b"-119"), ParseResult::new_bad("Value too low"));
+        assert_eq!(r.parse(b"-1"), ParseResult::new_bad("Value too low"));
         assert_eq!(r.parse(b"0"), ParseResult::Good(0, b""));
-        assert_eq!(r.parse(b"64"), ParseResult::Bad(ParseError::new("Value too high", b"64")));
-        assert_eq!(r.parse(b"65"), ParseResult::Bad(ParseError::new("Value too high", b"65")));
+        assert_eq!(r.parse(b"64"), ParseResult::new_bad("Value too high"));
+        assert_eq!(r.parse(b"65"), ParseResult::new_bad("Value too high"));
 
         let r = InRange::new(signed_int::<i32>(), 0..);
         assert_eq!(r.parse(b"532"), ParseResult::Good(532, b""));
-        assert_eq!(r.parse(b"-1"), ParseResult::Bad(ParseError::new("Value too low", b"-1")));
+        assert_eq!(r.parse(b"-1"), ParseResult::new_bad("Value too low"));
 
         let r = InRange::new(signed_int::<i32>(), ..=0);
         assert_eq!(r.parse(b"-117"), ParseResult::Good(-117, b""));

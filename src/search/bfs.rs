@@ -20,7 +20,7 @@ impl<S> Search<S> for BFS<S> where S: Clone + Hash + Eq {
         self.queue.pop_front()
     }
 
-    fn push_state(&mut self, state: S) {
+    fn add_state(&mut self, state: S) {
         if self.seen.insert(state.clone()) {
             self.queue.push_back(state);
         }

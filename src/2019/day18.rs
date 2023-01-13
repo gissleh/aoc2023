@@ -43,7 +43,7 @@ fn p1_graph(graph: &MazeGraph) -> u32 {
                         return Some(steps);
                     }
 
-                    dijkstra.push_state(WithCost(state, steps));
+                    dijkstra.add_state(WithCost(state, steps));
                 }
             }
 
@@ -80,7 +80,7 @@ fn p2_graph(graph: &MazeGraph) -> u32 {
                             return Some(steps);
                         }
 
-                        dijkstra.push_state(WithCost(state, steps));
+                        dijkstra.add_state(WithCost(state, steps));
                     }
                 }
             }
@@ -123,7 +123,7 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
             }
 
             for pos in pos.cardinals() {
-                bfs.push_state(WithCost(pos, (steps + 1, keys_required, keys_found)));
+                bfs.add_state(WithCost(pos, (steps + 1, keys_required, keys_found)));
             }
 
             res
@@ -179,7 +179,7 @@ fn p1_naive(grid: &MazeGrid) -> u32 {
 
             for pos in state.pos.cardinals() {
                 state.pos = pos;
-                bfs.push_state(WithCost(state, steps + 1));
+                bfs.add_state(WithCost(state, steps + 1));
             }
 
             None
@@ -223,7 +223,7 @@ fn p2_naive(grid: &MazeGrid) -> u32 {
                     let mut state = state;
                     state.pos[i] = pos;
 
-                    bfs.push_state(WithCost(state, steps + 1));
+                    bfs.add_state(WithCost(state, steps + 1));
                 }
             }
 

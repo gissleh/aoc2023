@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter};
 use std::ops::RangeBounds;
+use arrayvec::ArrayVec;
 
 use crate::utils::gather_target::GatherTarget;
 
@@ -48,7 +48,7 @@ pub trait Parser<'i, T>: Sized + Copy {
             offset += 1;
         }
 
-        ParseResult::Bad(ParseError::new("None were found", input))
+        ParseResult::new_bad("No parsable input found")
     }
 
     #[inline]
@@ -198,45 +198,38 @@ pub trait Parser<'i, T>: Sized + Copy {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct ParseError<'i> {
-    reason: &'static str,
-    sub_reason: Option<&'static str>,
-    input: &'i [u8],
-}
-
-impl<'i> Display for ParseError<'i> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if let Some(sub_reason) = self.sub_reason {
-            write!(f, "{}: {}", self.reason, sub_reason)
-        } else {
-            write!(f, "{}", self.reason)
-        }
-    }
-}
-
-impl<'i> ParseError<'i> {
-    fn new(reason: &'static str, input: &'i [u8]) -> Self {
-        Self { reason, input, sub_reason: None }
-    }
-
-    fn wrap(&self, reason: &'static str, input: &'i [u8]) -> Self {
-        Self { reason, input, sub_reason: self.sub_reason.or(Some(self.reason)) }
-    }
-}
-
 #[derive(Eq, PartialEq, Debug)]
 pub enum ParseResult<'i, T> {
     Good(T, &'i [u8]),
-    Bad(ParseError<'i>),
+    Bad(ArrayVec<&'static str, 4>),
 }
 
 impl<'i, T> ParseResult<'i, T> {
     pub fn unwrap(self) -> T {
         match self {
             ParseResult::Good(v, _) => v,
-            ParseResult::Bad(err) => panic!("Unwrap on failed parse: {}", err.reason)
+            ParseResult::Bad(err) => panic!("Unwrap on failed parse (errors: {:?})", err)
         }
+    }
+
+    #[cfg(test)]
+    pub fn new_bad_slice(errs: &'static [&'static str]) -> Self {
+        Self::Bad(ArrayVec::try_from(errs).unwrap())
+    }
+
+    pub fn new_bad(err: &'static str) -> Self {
+        let mut errs = ArrayVec::new();
+        errs.push(err);
+
+        ParseResult::Bad(errs)
+    }
+
+    pub fn wrap_bad(mut err: ArrayVec<&'static str, 4>, new_err: &'static str) -> Self {
+        if !err.is_full() {
+            err.push(new_err)
+        }
+
+        ParseResult::Bad(err)
     }
 }
 
@@ -246,7 +239,7 @@ impl<'i> Parser<'i, u8> for u8 {
         if input.first().copied() == Some(*self) {
             ParseResult::Good(*self, &input[1..])
         } else {
-            ParseResult::Bad(ParseError::new("u8 not matched", input))
+            ParseResult::new_bad("u8 not matched")
         }
     }
 
@@ -254,7 +247,7 @@ impl<'i> Parser<'i, u8> for u8 {
     fn first_parsable_in(&self, input: &'i [u8]) -> ParseResult<'i, (u8, usize)> {
         match input.iter().position(|v| *v == *self) {
             Some(index) => ParseResult::Good((*self, index), &input[index + 1..]),
-            None => ParseResult::Bad(ParseError::new("Byte not found in input", input)),
+            None => ParseResult::new_bad("Byte not found in input"),
         }
     }
 }
@@ -267,10 +260,10 @@ impl<'i, 's> Parser<'i, &'i [u8]> for &'s [u8] {
             if &head == self {
                 ParseResult::Good(head, tail)
             } else {
-                ParseResult::Bad(ParseError::new("String does not match", input))
+                ParseResult::new_bad("String does not match")
             }
         } else {
-            ParseResult::Bad(ParseError::new("String is too short", input))
+            ParseResult::new_bad("String is too short")
         }
     }
 
@@ -280,7 +273,7 @@ impl<'i, 's> Parser<'i, &'i [u8]> for &'s [u8] {
             Some((index, data)) => ParseResult::Good(
                 (data, index), &input[index + self.len()..],
             ),
-            None => ParseResult::Bad(ParseError::new("Byte slice not found in input", input)),
+            None => ParseResult::new_bad("Byte slice not found in input"),
         }
     }
 }
@@ -293,10 +286,10 @@ impl<'i, 's, const N: usize> Parser<'i, &'i [u8]> for &'s [u8; N] {
             if &head == self {
                 ParseResult::Good(head, tail)
             } else {
-                ParseResult::Bad(ParseError::new("String does not match", input))
+                ParseResult::new_bad("String does not match")
             }
         } else {
-            ParseResult::Bad(ParseError::new("String is too short", input))
+            ParseResult::new_bad("String is too short")
         }
     }
 
@@ -304,7 +297,7 @@ impl<'i, 's, const N: usize> Parser<'i, &'i [u8]> for &'s [u8; N] {
     fn first_parsable_in(&self, input: &'i [u8]) -> ParseResult<'i, (&'i [u8], usize)> {
         match input.array_windows::<N>().enumerate().find(|(_, w)| w == self) {
             Some((index, data)) => ParseResult::Good((data, index), &input[index + N..]),
-            None => ParseResult::Bad(ParseError::new("Byte slice not found in input", input)),
+            None => ParseResult::new_bad("Byte slice not found in input"),
         }
     }
 }
@@ -341,7 +334,7 @@ mod tests {
         );
         assert_eq!(
             b'H'.parse(b"Jello World"),
-            ParseResult::Bad(ParseError::new("u8 not matched", b"Jello World"))
+            ParseResult::new_bad("u8 not matched")
         );
     }
 
@@ -357,19 +350,19 @@ mod tests {
         );
         assert_eq!(
             b"Hello, ".parse(b"Hallo, Welt"),
-            ParseResult::Bad(ParseError::new("String does not match", b"Hallo, Welt"))
+            ParseResult::new_bad("String does not match")
         );
         assert_eq!(
             b"Hello, ".as_slice().parse(b"Hallo, Welt"),
-            ParseResult::Bad(ParseError::new("String does not match", b"Hallo, Welt"))
+            ParseResult::new_bad("String does not match")
         );
         assert_eq!(
             b"Hello, ".parse(b"Hell"),
-            ParseResult::Bad(ParseError::new("String is too short", b"Hell"))
+            ParseResult::new_bad("String is too short")
         );
         assert_eq!(
             b"Hello, ".as_slice().parse(b"Hell"),
-            ParseResult::Bad(ParseError::new("String is too short", b"Hell"))
+            ParseResult::new_bad("String is too short")
         );
     }
 }

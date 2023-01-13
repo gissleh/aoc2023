@@ -32,9 +32,7 @@ impl<'i, P, T, PV, TV> Parser<'i, T> for Vanguard<P, T, PV, TV> where P: Parser<
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         match self.vanguard_parser.parse(input) {
             ParseResult::Good(..) => self.value_parser.parse(input),
-            ParseResult::Bad(err) => ParseResult::Bad(
-                err.wrap("Vanguard failed", input),
-            ),
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Vanguard failed"),
         }
     }
 
@@ -45,16 +43,14 @@ impl<'i, P, T, PV, TV> Parser<'i, T> for Vanguard<P, T, PV, TV> where P: Parser<
                 ParseResult::Good((v, pos2), new_input) => ParseResult::Good((v, pos + pos2), new_input),
                 bad_result => bad_result,
             },
-            ParseResult::Bad(err) => ParseResult::Bad(
-                err.wrap("Vanguard failed", input),
-            ),
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Vanguard failed"),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::parse::{ParseError, Parser, ParseResult, unsigned_int};
+    use crate::parse::{Parser, ParseResult, unsigned_int};
     use crate::parse::vanguard::Vanguard;
 
     #[test]
@@ -72,9 +68,6 @@ mod tests {
         );
 
         assert_eq!(vanguard.parse(b"42!"), without_vanguard.parse(b"42!"));
-        assert_eq!(vanguard.parse(b"three"), ParseResult::Bad(
-            ParseError::new("u8 not matched", b"three")
-                .wrap("Vanguard failed", b"three"),
-        ));
+        assert_eq!(vanguard.parse(b"three"), ParseResult::new_bad_slice(&["u8 not matched", "Vanguard failed"]));
     }
 }

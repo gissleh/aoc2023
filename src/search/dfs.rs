@@ -19,7 +19,7 @@ impl<S> Search<S> for DFS<S> where S: Clone + Hash + Eq {
         self.stack.pop()
     }
 
-    fn push_state(&mut self, state: S) {
+    fn add_state(&mut self, state: S) {
         if self.seen.insert(state.clone()) {
             self.stack.push(state);
         }

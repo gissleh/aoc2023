@@ -103,7 +103,7 @@ impl Day {
         }
 
         let mut search = dfs::<(usize, Vec<(&'static str, i64)>, i64)>();
-        search.push_state((0, Vec::new(), 0));
+        search.add_state((0, Vec::new(), 0));
 
         let results: Vec<_> = search.gather(|s, (index, mut steps, total)| {
             let (label, (_, dur)) = self.graph.node(index).unwrap();
@@ -118,7 +118,7 @@ impl Day {
             let mut had_edges = false;
             for (_, next_index, _) in self.graph.edges_from(index) {
                 had_edges = true;
-                s.push_state((*next_index, steps.clone(), total_dur));
+                s.add_state((*next_index, steps.clone(), total_dur));
             }
 
             if !had_edges {

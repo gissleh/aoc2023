@@ -1,4 +1,4 @@
-use super::{Parser, ParseResult, ParseError};
+use super::{Parser, ParseResult};
 
 #[derive(Copy, Clone)]
 struct Everything;
@@ -10,7 +10,7 @@ impl<'i> Parser<'i, &'i [u8]> for Everything {
         if len > 0 {
             ParseResult::Good(input, &input[len..])
         } else {
-            ParseResult::Bad(ParseError::new("Nothing is the only thing that does not match Everything", input))
+            ParseResult::new_bad("Nothing is the only thing that does not match Everything")
         }
     }
 }
@@ -35,7 +35,7 @@ impl<'i> Parser<'i, u8> for AnyByte {
         if input.len() >= 1 {
             ParseResult::Good(input[0], &input[1..])
         } else {
-            ParseResult::Bad(ParseError::new("Empty input", input))
+            ParseResult::new_bad("Empty input")
         }
     }
 }
@@ -52,7 +52,7 @@ impl<'i, const N: usize> Parser<'i, [u8; N]> for NBytes<N> {
 
             ParseResult::Good(res, &input[N..])
         } else {
-            ParseResult::Bad(ParseError::new("Empty input", input))
+            ParseResult::new_bad("Empty input")
         }
     }
 }
@@ -65,7 +65,7 @@ impl<'i> Parser<'i, &'i [u8]> for BytesUntil {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
         match input.iter().position(|v| *v == self.0) {
             Some(pos) => ParseResult::Good(&input[..pos], &input[pos + (self.1 as usize)..]),
-            None => ParseResult::Bad(ParseError::new("Byte not found", input))
+            None => ParseResult::new_bad("Byte not found")
         }
     }
 }

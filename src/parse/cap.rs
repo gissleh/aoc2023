@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use crate::parse::{ParseError, Parser, ParseResult};
+use crate::parse::{Parser, ParseResult};
 
 pub struct QuotedBy<PB, TB, PL, TL, PR, TR> {
     body_parser: PB,
@@ -38,13 +38,13 @@ impl<'i, PB, TB, PL, TL, PR, TR> Parser<'i, TB> for QuotedBy<PB, TB, PL, TL, PR,
                     ParseResult::Good(v, new_input) => if new_input.len() == 0 {
                         ParseResult::Good(v, input_after)
                     } else {
-                        ParseResult::Bad(ParseError::new("QuotedBy body was not exhausted", input))
+                        ParseResult::new_bad("QuotedBy body was not exhausted")
                     },
-                    ParseResult::Bad(err) => ParseResult::Bad(err.wrap("QuotedBy Body Failed", input)),
+                    ParseResult::Bad(err) => ParseResult::wrap_bad(err, "QuotedBy Body Failed"),
                 },
-                ParseResult::Bad(err) => ParseResult::Bad(err.wrap("QuotedBy RQ Failed", input)),
+                ParseResult::Bad(err) => ParseResult::wrap_bad(err, "QuotedBy RQ Failed"),
             },
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("QuotedBy LQ Failed", input)),
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "QuotedBy LQ Failed"),
         }
     }
 }
@@ -80,11 +80,11 @@ impl<'i, PB, TB, PC, TC> Parser<'i, TB> for CappedBy<PB, TB, PC, TC> where PB: P
                 ParseResult::Good(v, new_input) => if new_input.len() == 0 {
                     ParseResult::Good(v, after_cap)
                 } else {
-                    ParseResult::Bad(ParseError::new("RightCap's content was not consumed", input))
+                    ParseResult::new_bad("RightCap's content was not consumed")
                 }
                 ParseResult::Bad(err) => ParseResult::Bad(err)
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err.wrap("Until parser result not found", input))
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Until parser result not found")
         }
     }
 }

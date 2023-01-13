@@ -40,7 +40,8 @@ impl<'i, PL, PR, T> Parser<'i, T> for Or<PL, PR, T> where PL: Parser<'i, T>, PR:
 
 #[cfg(test)]
 mod tests {
-    use crate::parse::{everything, ParseError, signed_int};
+    use arrayvec::ArrayVec;
+    use crate::parse::{everything, signed_int};
     use super::*;
 
     #[test]
@@ -62,9 +63,6 @@ mod tests {
         assert_eq!(parser.parse(b"noop"), ParseResult::Good(TestData::Noop, b""));
         assert_eq!(parser.parse(b"add -47 112"), ParseResult::Good(TestData::Add(-47, 112), b""));
         assert_eq!(parser.parse(b"print Hello World"), ParseResult::Good(TestData::Print(b"Hello World"), b""));
-        assert_eq!(parser.parse(b"mul 183 929"), ParseResult::Bad(
-            ParseError::new("String does not match", b"mul 183 929")
-                .wrap("Left in And failed", b"mul 183 929")
-        ));
+        assert_eq!(parser.parse(b"mul 183 929"), ParseResult::Bad(ArrayVec::try_from(["String does not match", "Left in And failed"].as_slice()).unwrap()));
     }
 }
