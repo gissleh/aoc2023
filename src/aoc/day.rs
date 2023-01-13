@@ -46,7 +46,6 @@ impl Day {
                 .filter(|c| *c != '(')
                 .collect::<String>();
 
-
             print!("{: >16}", format!("{}={}", abbr, format_duration(*step_time)));
         }
 

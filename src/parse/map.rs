@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use crate::parse::{Parser, ParseResult};
+use crate::parse::{ParseError, Parser, ParseResult};
 
 pub struct Map<P, F, TP, TF> {
     parser: P,
@@ -71,11 +71,72 @@ impl<P, TP, TV> MapValue<P, TP, TV> {
     }
 }
 
+pub struct FilterMap<P, F, TP, TF> {
+    parser: P,
+    mapper_fn: F,
+    spooky_ghost: PhantomData<(TP, TF)>,
+}
+
+impl<P, F, TP, TF> FilterMap<P, F, TP, TF> {
+    #[inline]
+    pub(crate) fn new(parser: P, mapper_fn: F) -> Self {
+        Self { parser, mapper_fn, spooky_ghost: PhantomData::default() }
+    }
+}
+
+impl<P, F, TP, TF> Copy for FilterMap<P, F, TP, TF> where P: Copy, F: Copy {}
+
+impl<P, F, TP, TF> Clone for FilterMap<P, F, TP, TF> where P: Clone, F: Clone {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self {
+            parser: self.parser.clone(),
+            mapper_fn: self.mapper_fn.clone(),
+            spooky_ghost: PhantomData::default(),
+        }
+    }
+}
+
+impl<'i, P, F, TP, TF> Parser<'i, TF> for FilterMap<P, F, TP, TF>
+    where P: Parser<'i, TP>,
+          F: Fn(TP) -> Option<TF> + Copy {
+    #[inline]
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TF> {
+        match self.parser.parse(input) {
+            ParseResult::Good(vp, new_input) => match (self.mapper_fn)(vp) {
+                Some(vf) => ParseResult::Good(vf, new_input),
+                None => ParseResult::Bad(ParseError::new("FilterMap function returned None", input))
+            }
+            ParseResult::Bad(err) => ParseResult::Bad(err),
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use crate::geo::Point;
-    use crate::parse::{digit, signed_int};
+    use crate::parse::{any_byte, digit, signed_int};
     use super::*;
+
+    #[test]
+    fn filter_map_filters_and_maps_like_a_filter_map_does() {
+        let parser_1 = any_byte().filter_map(|v| match v {
+            b'0'..=b'9' => Some((v - b'0') as u32),
+            b'a'..=b'z' => Some((v - b'a') as u32 + 100),
+            b'A'..=b'Z' => Some((v - b'A') as u32 + 200),
+            b'#' => Some(999),
+            _ => None,
+        });
+
+        assert_eq!(
+            parser_1.repeat().parse(b"123#abZ.aa"),
+            ParseResult::Good(
+                vec![1, 2, 3, 999, 100, 101, 225],
+                b".aa"
+            )
+        );
+    }
 
     #[test]
     fn map_maps_mappily_ever_after() {

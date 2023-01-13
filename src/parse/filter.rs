@@ -2,16 +2,16 @@ use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
 use crate::parse::{ParseError, Parser, ParseResult};
 
-pub struct Where<P, F, T> {
+pub struct Filter<P, F, T> {
     parser: P,
     callback: F,
     spooky_ghost: PhantomData<T>,
 }
 
 
-impl<P, F, T> Copy for Where<P, F, T> where P: Copy, F: Copy {}
+impl<P, F, T> Copy for Filter<P, F, T> where P: Copy, F: Copy {}
 
-impl<P, F, T> Clone for Where<P, F, T> where P: Clone, F: Clone {
+impl<P, F, T> Clone for Filter<P, F, T> where P: Clone, F: Clone {
     fn clone(&self) -> Self {
         Self {
             parser: self.parser.clone(),
@@ -21,14 +21,14 @@ impl<P, F, T> Clone for Where<P, F, T> where P: Clone, F: Clone {
     }
 }
 
-impl<'i, P, F, T> Where<P, F, T> where P: Parser<'i, T>, F: Fn(&T) -> bool {
+impl<'i, P, F, T> Filter<P, F, T> where P: Parser<'i, T>, F: Fn(&T) -> bool {
     #[inline]
     pub fn new(parser: P, callback: F) -> Self {
         Self { parser, callback, spooky_ghost: Default::default() }
     }
 }
 
-impl<'i, P, F, T> Parser<'i, T> for Where<P, F, T> where P: Parser<'i, T>, F: Fn(&T) -> bool + Copy {
+impl<'i, P, F, T> Parser<'i, T> for Filter<P, F, T> where P: Parser<'i, T>, F: Fn(&T) -> bool + Copy {
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         match self.parser.parse(input) {

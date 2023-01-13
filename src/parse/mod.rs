@@ -6,16 +6,17 @@ use crate::utils::gather_target::GatherTarget;
 pub use int::{signed_int, unsigned_int, digit};
 pub use skip::skip;
 pub use choice::choice;
+pub use bytes::*;
 
 use repeat::{Repeat, DelimitedBy, Count};
 use skip::{ThenSkip, SkipAll};
 use and::{And, AndReplace, AndDiscard};
-use map::{Map, MapValue};
+use map::{Map, MapValue, FilterMap};
 use or::Or;
-use filter::{InRange, Where};
+use filter::{InRange, Filter};
 use rewind::Rewind;
 use vanguard::Vanguard;
-use crate::parse::cap::RightCap;
+use crate::parse::cap::{CappedBy, QuotedBy};
 
 mod repeat;
 mod skip;
@@ -28,6 +29,7 @@ mod vanguard;
 mod rewind;
 mod cap;
 mod choice;
+mod bytes;
 
 pub trait Parser<'i, T>: Sized + Copy {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T>;
@@ -77,6 +79,11 @@ pub trait Parser<'i, T>: Sized + Copy {
         MapValue::new(self, value)
     }
 
+    #[inline]
+    fn filter_map<F, TF>(self, f: F) -> FilterMap<Self, F, T, TF> where F: Fn(T) -> Option<TF> + Copy {
+        FilterMap::new(self, f)
+    }
+
     /// And parses the current parser, and then the one to the right, returning both values.
     /// You may want to use and_discard or and_instead to keep only one value.
     #[inline]
@@ -104,9 +111,17 @@ pub trait Parser<'i, T>: Sized + Copy {
         Rewind::new(self)
     }
 
+    /// Get the content until the RQ parser. The RQ is consumed, and the content must all be consumed
     #[inline]
-    fn capped_by<PC, TC>(self, parser: PC) -> RightCap<Self, T, PC, TC> where PC: Parser<'i, TC> {
-        RightCap::new(self, parser)
+    fn capped_by<PC, TC>(self, parser: PC) -> CappedBy<Self, T, PC, TC> where PC: Parser<'i, TC> {
+        CappedBy::new(self, parser)
+    }
+
+    /// Get the content between the LQ and RQ parser. The LQ and RQ are consumed, and all between
+    /// must also be consumed.
+    #[inline]
+    fn quoted_by<PL, TL, PR, TR>(self, lq_parser: PL, rq_parser: PR) -> QuotedBy<Self, T, PL, TL, PR, TR> where PL: Parser<'i, TL>, PR: Parser<'i, TR> {
+        QuotedBy::new(self, lq_parser, rq_parser)
     }
 
     /// If this parser fails, it will instead try the other one. It must return the same
@@ -131,11 +146,13 @@ pub trait Parser<'i, T>: Sized + Copy {
         Repeat::new(self, 0)
     }
 
+    /// Repeat for **exactly** the specified amount of times.
     #[inline]
     fn repeat_n<R>(self, amount: usize) -> Repeat<Self, T, R> {
         Repeat::new(self, amount)
     }
 
+    /// Count the repetitions. This returns an error if it empty.
     #[inline]
     fn count_repetitions(self) -> Count<Self, T> {
         Count::new(self)
@@ -168,8 +185,8 @@ pub trait Parser<'i, T>: Sized + Copy {
 
     /// Filter filters the parsed result, failing the parser if the callback returns false.
     #[inline]
-    fn only_if<F>(self, callback: F) -> Where<Self, F, T> where F: Fn(&T) -> bool + Copy {
-        Where::new(self, callback)
+    fn only_if<F>(self, callback: F) -> Filter<Self, F, T> where F: Fn(&T) -> bool + Copy {
+        Filter::new(self, callback)
     }
 
     /// Optimize the parser by requiring that a 'vanguard' parser succeeds before the same input
@@ -291,104 +308,6 @@ impl<'i, 's, const N: usize> Parser<'i, &'i [u8]> for &'s [u8; N] {
         }
     }
 }
-
-#[derive(Copy, Clone)]
-struct Everything;
-
-impl<'i> Parser<'i, &'i [u8]> for Everything {
-    #[inline]
-    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
-        let len = input.len();
-        if len > 0 {
-            ParseResult::Good(input, &input[len..])
-        } else {
-            ParseResult::Bad(ParseError::new("Nothing is the only thing that does not match Everything", input))
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-struct Anything;
-
-impl<'i> Parser<'i, &'i [u8]> for Anything {
-    #[inline]
-    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
-        let len = input.len();
-        ParseResult::Good(input, &input[len..])
-    }
-}
-
-
-#[derive(Copy, Clone)]
-struct AnyByte;
-
-impl<'i> Parser<'i, u8> for AnyByte {
-    #[inline]
-    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, u8> {
-        if input.len() >= 1 {
-            ParseResult::Good(input[0], &input[1..])
-        } else {
-            ParseResult::Bad(ParseError::new("Empty input", input))
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-struct NBytes<const N: usize>;
-
-impl<'i, const N: usize> Parser<'i, [u8; N]> for NBytes<N> {
-    #[inline]
-    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, [u8; N]> {
-        if input.len() >= N {
-            let mut res = [0u8; N];
-            res.copy_from_slice(&input[..N]);
-
-            ParseResult::Good(res, &input[N..])
-        } else {
-            ParseResult::Bad(ParseError::new("Empty input", input))
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-struct BytesUntil(u8, bool);
-
-impl<'i> Parser<'i, &'i [u8]> for BytesUntil {
-    #[inline]
-    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
-        match input.iter().position(|v| *v == self.0) {
-            Some(pos) => ParseResult::Good(&input[..pos], &input[pos + (self.1 as usize)..]),
-            None => ParseResult::Bad(ParseError::new("Byte not found", input))
-        }
-    }
-}
-
-#[inline]
-pub fn everything<'i>() -> impl Parser<'i, &'i [u8]> {
-    Everything
-}
-
-#[inline]
-pub fn anything<'i>() -> impl Parser<'i, &'i [u8]> {
-    Anything
-}
-
-#[inline]
-pub fn any_byte<'i>() -> impl Parser<'i, u8> {
-    AnyByte
-}
-
-#[inline]
-pub fn n_bytes<'i, const N: usize>() -> impl Parser<'i, [u8; N]> { NBytes::<N> }
-
-#[inline]
-pub fn bytes_until<'i>(b: u8, eat: bool) -> impl Parser<'i, &'i [u8]> { BytesUntil(b, eat) }
-
-#[inline]
-pub fn word<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntil(b' ', true).or(line()) }
-
-#[inline]
-pub fn line<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntil(b'\n', true) }
 
 #[cfg(test)]
 mod tests {
