@@ -171,3 +171,74 @@ impl<'i, C, T> Parser<'i, T> for Choice<C> where C: Choices<'i, T> {
 pub fn choice<'i, T, C: Choices<'i, T>>(choices: C) -> impl Parser<'i, T> {
     Choice(choices)
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::parse::{everything, unsigned_int};
+    use super::*;
+
+    #[test]
+    fn choice_choices() {
+        #[derive(Clone, Eq, PartialEq, Debug)]
+        enum Instruction<'i> { Set(u8, i64), Select(u8), Add(i64), Sub(i64), Print(u8), PrintText(&'i [u8]) }
+
+        let sep = b','.then_skip_all(b' ');
+        let function = choice((
+            b"set".and_instead(
+                unsigned_int()
+                    .and_discard(sep)
+                    .and(unsigned_int())
+                    .quoted_by(b'(', b')')
+                    .map(|(a, v)| Instruction::Set(a, v))
+            ),
+            b"select".and_instead(
+                unsigned_int()
+                    .quoted_by(b'(', b')')
+                    .map(|a| Instruction::Select(a))
+            ),
+            b"add".and_instead(
+                unsigned_int()
+                    .quoted_by(b'(', b')')
+                    .map(|v| Instruction::Add(v))
+            ),
+            b"sub".and_instead(
+                unsigned_int()
+                    .quoted_by(b'(', b')')
+                    .map(|v| Instruction::Sub(v))
+            ),
+            b"print".and_instead(
+                unsigned_int()
+                    .quoted_by(b'(', b')')
+                    .map(|a| Instruction::Print(a))
+            ),
+            b"print_text".and_instead(
+                everything()
+                    .quoted_by(b'"', b'"')
+                    .quoted_by(b'(', b')')
+                    .map(|text| Instruction::PrintText(text))
+            ),
+        ));
+        let parser = function.delimited_by(
+            b';'
+                .then_skip_all(b' ')
+                .then_skip_all(b'\n')
+        ).repeat::<Vec<Instruction>>();
+
+        assert_eq!(
+            parser.parse(b"set(0, 64); set(1, 32); select(0); add(43); select(1); sub(39); print_text(\"a is: \"); print(0)"),
+            ParseResult::Good(
+                vec![
+                    Instruction::Set(0, 64),
+                    Instruction::Set(1, 32),
+                    Instruction::Select(0),
+                    Instruction::Add(43),
+                    Instruction::Select(1),
+                    Instruction::Sub(39),
+                    Instruction::PrintText(b"a is: "),
+                    Instruction::Print(0),
+                ],
+                b""
+            )
+        )
+    }
+}
