@@ -1,6 +1,6 @@
 use common::aoc::Day;
 use common::parse;
-use common::parse::{any_byte, choice, digit, Parser};
+use common::parse::Parser;
 
 pub fn main(day: &mut Day, input: &[u8]) {
     let list = day.prep("Parse", || parse_list(input));
@@ -13,9 +13,9 @@ fn p1(list: &[&[u8]]) -> u32 {
     list.iter()
         .map(|l| l.iter()
             .filter(|c| **c > b'0' && **c <= b'9')
-            .fold([u32::MAX, 0], |v, c| {
+            .fold([0, 0], |v, c| {
                 let c = (c - b'0') as u32;
-                if v[0] == u32::MAX {
+                if v[0] == 0 {
                     [c * 10, c]
                 } else {
                     [v[0], c]
@@ -26,33 +26,26 @@ fn p1(list: &[&[u8]]) -> u32 {
 }
 
 fn p2(list: &[&[u8]]) -> u64 {
-    let num_parser = digit()
-        .or(choice((
-            b"on".as_slice().and_discard(b'e'.rewind()).map_to(1),
-            b"tw".as_slice().and_discard(b'o'.rewind()).map_to(2),
-            b"thre".as_slice().and_discard(b'e'.rewind()).map_to(3),
-            b"four".as_slice().map_to(4),
-            b"fiv".as_slice().and_discard(b'e'.rewind()).map_to(5),
-            b"six".as_slice().map_to(6),
-            b"seve".as_slice().and_discard(b'n'.rewind()).map_to(7),
-            b"eigh".as_slice().and_discard(b't'.rewind()).map_to(8),
-            b"nin".as_slice().and_discard(b'e'.rewind()).map_to(9),
+    let num_parser = parse::digit()
+        .or(parse::choice((
+            b"on".and_discard(b'e'.rewind()).map_to(1),
+            b"tw".and_discard(b'o'.rewind()).map_to(2),
+            b"thre".and_discard(b'e'.rewind()).map_to(3),
+            b"four".map_to(4),
+            b"fiv".and_discard(b'e'.rewind()).map_to(5),
+            b"six".map_to(6),
+            b"seve".and_discard(b'n'.rewind()).map_to(7),
+            b"eigh".and_discard(b't'.rewind()).map_to(8),
+            b"nin".and_discard(b'e'.rewind()).map_to(9),
         )))
-        .or(any_byte().map_to(0));
+        .or(parse::any_byte().map_to(0));
 
     list.iter()
         .map(|l| num_parser.parse_iter(l)
             .filter(|d| *d > 0)
-            .fold([0, 0], |v, d| {
-                if v[0] == 0 {
-                    [d * 10, d]
-                } else {
-                    [v[0], d]
-                }
-            }))
-        .map(|a| {
-            a[0] + a[1]
-        })
+            .fold([0, 0], |v, d| if v[0] == 0 { [d * 10, d] } else { [v[0], d] })
+        )
+        .map(|a| a[0] + a[1])
         .sum()
 }
 
