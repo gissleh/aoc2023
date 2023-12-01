@@ -27,18 +27,17 @@ fn p1(list: &[&[u8]]) -> u32 {
 }
 
 fn num_parser<'i>() -> impl Parser<'i, u32> {
-    parse::digit()
-        .or(parse::choice((
-            b"on".and_discard(b'e'.rewind()).map_to(1),
-            b't'.and_instead(b'w'.and_discard(b'o'.rewind()).map_to(2))
-                .or(b"hre".and_discard(b'e'.rewind()).map_to(3)),
-            b"four".map_to(4),
-            b"fiv".and_discard(b'e'.rewind()).map_to(5),
-            b"six".map_to(6),
-            b"seve".and_discard(b'n'.rewind()).map_to(7),
-            b"eigh".and_discard(b't'.rewind()).map_to(8),
-            b"nin".and_discard(b'e'.rewind()).map_to(9),
-        )))
+    parse::digit().or(parse::choice((
+        b"one".map_to(1),
+        b"two".map_to(2),
+        b"three".map_to(3),
+        b"four".map_to(4),
+        b"five".map_to(5),
+        b"six".map_to(6),
+        b"seven".map_to(7),
+        b"eight".map_to(8),
+        b"nine".map_to(9),
+    )))
 }
 
 fn p2(list: &[&[u8]]) -> u32 {
