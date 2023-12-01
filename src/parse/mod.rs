@@ -60,6 +60,26 @@ pub trait Parser<'i, T>: Sized + Copy {
         ParseResult::new_bad("No parsable input found")
     }
 
+
+    /// Find the last parsable result in the input.
+    #[inline]
+    fn last_parsable_in(&self, input: &'i [u8]) -> ParseResult<'i, (T, usize)> {
+        let input = input;
+        let mut offset = input.len() - 1;
+        loop {
+            if let ParseResult::Good(v, next_input) = self.parse(&input[offset..]) {
+                return ParseResult::Good((v, offset), next_input);
+            }
+
+            if offset == 0 {
+                break;
+            }
+            offset -= 1;
+        }
+
+        ParseResult::new_bad("No parsable last input found")
+    }
+
     #[inline]
     #[allow(unused_variables)]
     fn parse_at_index(&self, input: &'i [u8], index: usize) -> ParseResult<'i, T> {

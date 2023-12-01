@@ -27,6 +27,10 @@ impl Day {
         }
     }
 
+    pub fn branch_from_root(&mut self) {
+        self.tail = Some(0);
+    }
+
     pub fn branch_from(&mut self, label: &'static str) {
         self.tail = Some(self.graph.find(&label).unwrap());
     }

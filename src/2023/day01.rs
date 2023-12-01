@@ -4,6 +4,7 @@ use common::parse::Parser;
 
 pub fn main(day: &mut Day, input: &[u8]) {
     let list = day.prep("Parse", || parse_list(input));
+    day.note("Input length", list.len());
 
     day.part("P1", || p1(&list));
     day.part("P2", || p2(&list));
@@ -25,12 +26,12 @@ fn p1(list: &[&[u8]]) -> u32 {
         .sum()
 }
 
-fn p2(list: &[&[u8]]) -> u64 {
-    let num_parser = parse::digit()
+fn num_parser<'i>() -> impl Parser<'i, u32> {
+    parse::digit()
         .or(parse::choice((
             b"on".and_discard(b'e'.rewind()).map_to(1),
-            b"tw".and_discard(b'o'.rewind()).map_to(2),
-            b"thre".and_discard(b'e'.rewind()).map_to(3),
+            b't'.and_instead(b'w'.and_discard(b'o'.rewind()).map_to(2))
+                .or(b"hre".and_discard(b'e'.rewind()).map_to(3)),
             b"four".map_to(4),
             b"fiv".and_discard(b'e'.rewind()).map_to(5),
             b"six".map_to(6),
@@ -38,14 +39,16 @@ fn p2(list: &[&[u8]]) -> u64 {
             b"eigh".and_discard(b't'.rewind()).map_to(8),
             b"nin".and_discard(b'e'.rewind()).map_to(9),
         )))
-        .or(parse::any_byte().map_to(0));
+}
+
+fn p2(list: &[&[u8]]) -> u32 {
+    let num_parser = num_parser();
 
     list.iter()
-        .map(|l| num_parser.parse_iter(l)
-            .filter(|d| *d > 0)
-            .fold([0, 0], |v, d| if v[0] == 0 { [d * 10, d] } else { [v[0], d] })
+        .map(|l|
+            num_parser.first_parsable_in(l).unwrap().0 * 10 +
+            num_parser.last_parsable_in(l).unwrap().0
         )
-        .map(|a| a[0] + a[1])
         .sum()
 }
 
