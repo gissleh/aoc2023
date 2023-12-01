@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::ops::RangeBounds;
 use arrayvec::ArrayVec;
 
@@ -71,6 +72,15 @@ pub trait Parser<'i, T>: Sized + Copy {
         match self.parse_at_index(input, index) {
             ParseResult::Good(v, input) => ParseResult::Good(target.gather_into(index, v), input),
             ParseResult::Bad(err) => ParseResult::Bad(err)
+        }
+    }
+
+    fn parse_iter(&self, input: &'i [u8]) -> ParseIterator<'i, Self, T> {
+        ParseIterator{
+            parser: *self,
+            index: 0,
+            spooky_ghost: PhantomData::default(),
+            input,
         }
     }
 
@@ -306,6 +316,29 @@ impl<'i, 's, const N: usize> Parser<'i, &'i [u8]> for &'s [u8; N] {
         match input.array_windows::<N>().enumerate().find(|(_, w)| w == self) {
             Some((index, data)) => ParseResult::Good((data, index), &input[index + N..]),
             None => ParseResult::new_bad("Byte slice not found in input"),
+        }
+    }
+}
+
+pub struct ParseIterator<'i, P, T> {
+    input: &'i [u8],
+    parser: P,
+    index: usize,
+    spooky_ghost: PhantomData<T>,
+}
+
+impl<'i, P, T> Iterator for ParseIterator<'i, P, T> where P: Parser<'i, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.parser.parse_at_index(self.input, self.index) {
+            ParseResult::Good(res, new_input) => {
+                self.index += 1;
+                self.input = new_input;
+
+                Some(res)
+            }
+            ParseResult::Bad(_) => None,
         }
     }
 }

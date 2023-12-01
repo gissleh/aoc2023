@@ -28,7 +28,7 @@ impl AOC {
                 file.read_to_end(&mut buf).expect("Could not read file");
             }
             Err(_) => {
-                let token = option_env!("AOC_SESSION").unwrap();
+                let token = option_env!("AOC_SESSION").expect("token not found");
                 if token == "" {
                     panic!("Env is not set")
                 }
@@ -42,8 +42,8 @@ impl AOC {
                     .header("User-Agent", "AOC Runner (github.com/gissleh/aoc2023, by dev@gisle.me)")
                     .header("Authority", "adventofcode.com")
                     .header("Cookie", format!("session={}", token))
-                    .send().unwrap()
-                    .bytes().unwrap();
+                    .send().expect("failed to send request")
+                    .bytes().expect("could not read file");
 
                 buf.extend(data.iter());
 

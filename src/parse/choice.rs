@@ -152,6 +152,34 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
     }
 }
 
+impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>, P5: Parser<'i, T>, P6: Parser<'i, T>, P7: Parser<'i, T>, P8: Parser<'i, T>, P9: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3, P4, P5, P6, P7, P8, P9) {
+    #[inline]
+    fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
+        if let ParseResult::Good(v, input) = self.0.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.1.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.2.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.3.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.4.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.5.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.6.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.7.parse(input) {
+            ParseResult::Good(v, input)
+        } else if let ParseResult::Good(v, input) = self.8.parse(input) {
+            ParseResult::Good(v, input)
+        } else {
+            ParseResult::new_bad("No choices matched")
+        }
+    }
+}
+
+
 struct Choice<C> (C);
 
 impl<C> Copy for Choice<C> where C: Copy {}

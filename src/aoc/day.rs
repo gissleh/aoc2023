@@ -168,7 +168,7 @@ impl Day {
 
     fn run<F, T>(&mut self, f: F) -> (T, i64) where F: Fn() -> T {
         let before = Instant::now();
-        let res = f();
+        let mut res = f();
         let after = Instant::now();
         let dur = after - before;
 
@@ -181,13 +181,13 @@ impl Day {
             50..=99 => 10,
             100..=299 => 4,
             300..=499 => 2,
-            _ => 0
+            _ => 1
         };
         let mut dur = dur.whole_nanoseconds() as i64;
 
         if runs > 0 && !self.run_once {
             let before = Instant::now();
-            for _ in 0..runs { f(); }
+            for _ in 0..runs { res = f(); }
             let after = Instant::now();
 
             dur = ((after - before).whole_nanoseconds() as i64) / (runs as i64);

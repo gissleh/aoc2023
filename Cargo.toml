@@ -11,6 +11,10 @@ path = "src/lib.rs"
 name = "2019"
 path = "src/2019/main.rs"
 
+[[bin]]
+name = "2023"
+path = "src/2023/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
