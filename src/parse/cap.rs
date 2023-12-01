@@ -87,4 +87,18 @@ impl<'i, PB, TB, PC, TC> Parser<'i, TB> for CappedBy<PB, TB, PC, TC> where PB: P
             ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Until parser result not found")
         }
     }
+
+    fn can_parse(&self, input: &'i [u8]) -> ParseResult<'i, ()> {
+        match self.cap_parser.first_parsable_in(input) {
+            ParseResult::Good((_, pos), after_cap) => match self.body_parser.can_parse(&input[..pos]) {
+                ParseResult::Good(_, new_input) => if new_input.len() == 0 {
+                    ParseResult::Good((), after_cap)
+                } else {
+                    ParseResult::new_bad("RightCap's content was not consumed")
+                }
+                ParseResult::Bad(err) => ParseResult::Bad(err)
+            }
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Until parser result not found")
+        }
+    }
 }

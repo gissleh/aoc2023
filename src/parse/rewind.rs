@@ -20,6 +20,13 @@ impl<'i, P, T> Parser<'i, T> for Rewind<P, T> where P: Parser<'i, T> {
             ParseResult::Bad(err) => ParseResult::Bad(err),
         }
     }
+
+    fn can_parse(&self, input: &'i [u8]) -> ParseResult<'i, ()> {
+        match self.parser.can_parse(input) {
+            ParseResult::Good(..) => ParseResult::Good((), input),
+            ParseResult::Bad(err) => ParseResult::Bad(err),
+        }
+    }
 }
 
 impl<P, T> Copy for Rewind<P, T> where P: Copy {}

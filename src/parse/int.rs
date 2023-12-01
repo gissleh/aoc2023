@@ -70,6 +70,25 @@ impl<'i, T> Parser<'i, T> for SignedInt<T> where T: Copy + From<u8> + MulAssign 
 
         ParseResult::Good(if negative { v.neg() } else { v }, current_input)
     }
+
+    #[inline]
+    fn can_parse(&self, mut input: &'i [u8]) -> ParseResult<'i, ()> {
+        if input.len() == 0 {
+            if input[0] == b'-' {
+                input = &input[1..];
+            }
+
+            let len = input.iter().take_while(|v| **v >= b'0' && **v <= b'9').count();
+
+            if len > 0 {
+                ParseResult::Good((), &input[len..])
+            } else {
+                ParseResult::new_bad("SignedInt parsed non-number")
+            }
+        } else {
+            ParseResult::new_bad("SignedInt parsed empty number")
+        }
+    }
 }
 
 #[inline]
@@ -109,6 +128,20 @@ impl<'i, T> Parser<'i, T> for UnsignedInt<T> where T: Copy + From<u8> + MulAssig
         }
 
         ParseResult::Good(v, current_input)
+    }
+
+    #[inline]
+    fn can_parse(&self, input: &'i [u8]) -> ParseResult<'i, ()> {
+        if input.len() == 0 {
+            let len = input.iter().take_while(|v| **v >= b'0' && **v <= b'9').count();
+            if len > 0 {
+                ParseResult::Good((), &input[len..])
+            } else {
+                ParseResult::new_bad("UnsignedInt parsed non-number")
+            }
+        } else {
+            ParseResult::new_bad("UnsignedInt parsed empty number")
+        }
     }
 }
 
@@ -156,7 +189,6 @@ mod tests {
             ParseResult::Good(85070591730234615865843651857942052864i128, b" and change")
         );
     }
-
 
     #[test]
     fn parse_int_throws_the_right_errors() {

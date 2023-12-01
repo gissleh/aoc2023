@@ -1,8 +1,8 @@
 use std::ops::{Index, IndexMut};
 use crate::geo::Point;
-use crate::grid::storage::GridStorage;
 use crate::parse::{everything, line, Parser, ParseResult};
 use crate::utils::gather_target::GatherTarget;
+pub use storage::GridStorage;
 
 mod storage;
 
@@ -27,6 +27,16 @@ impl<T, S> Grid<T, S> where S: GridStorage<T> {
             .iter()
             .enumerate()
             .map(|(i, v)| (Point::new(i % self.width, i / self.width), v))
+    }
+
+    #[inline]
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    #[inline]
+    pub fn height(&self) -> usize {
+        self.height
     }
 }
 

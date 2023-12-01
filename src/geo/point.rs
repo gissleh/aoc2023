@@ -63,7 +63,7 @@ impl<T> Clone for Point<T> where T: SimdElement, Simd<T, 2>: Clone {
     fn clone(&self) -> Self { Self(self.0.clone()) }
 }
 
-impl<T> const Default for Point<T> where T: SimdElement, Simd<T, 2>: ~const Default {
+impl<T> Default for Point<T> where T: SimdElement, Simd<T, 2>: Default {
     #[inline(always)]
     fn default() -> Self { Self(Default::default()) }
 }

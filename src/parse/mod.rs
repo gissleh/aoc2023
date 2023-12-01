@@ -34,6 +34,14 @@ mod bytes;
 pub trait Parser<'i, T>: Sized + Copy {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T>;
 
+    #[inline]
+    fn can_parse(&self, input: &'i [u8]) -> ParseResult<'i, ()> {
+        match self.parse(input) {
+            ParseResult::Good(_, input) => ParseResult::Good((), input),
+            ParseResult::Bad(err) => ParseResult::Bad(err),
+        }
+    }
+
     /// Find the first parsable result in the input.
     #[inline]
     fn first_parsable_in(&self, input: &'i [u8]) -> ParseResult<'i, (T, usize)> {
