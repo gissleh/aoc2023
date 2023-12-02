@@ -6,8 +6,8 @@ pub fn main(day: &mut Day, input: &[u8]) {
     let list = day.prep("Parse", || parse_list(input));
     day.note("Input length", list.len());
 
-    day.part("P1", || p1(&list));
-    day.part("P2", || p2(&list));
+    day.part("Part 1", || p1(&list));
+    day.part("Part 2", || p2(&list));
 }
 
 fn p1(list: &[&[u8]]) -> u32 {
