@@ -169,6 +169,11 @@ pub trait Parser<'i, T>: Sized + Copy {
         Or::new(self, rhs)
     }
 
+    /// If the parser fail, return this value instead of an error.
+    fn or_return(self, value: T) -> Or<Self, Return<T>, T> {
+        Or::new(self, Return(value))
+    }
+
     /// Repeat this parser until the collection fills or a non-first result fails.
     /// If the first result fails, it will fail as well.
     ///
@@ -360,6 +365,22 @@ impl<'i, P, T> Iterator for ParseIterator<'i, P, T> where P: Parser<'i, T> {
             }
             ParseResult::Bad(_) => None,
         }
+    }
+}
+
+pub struct Return<T> (T);
+
+impl<T> Copy for Return<T> where T: Copy {}
+
+impl<T> Clone for Return<T> where T: Copy {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<'i, T> Parser<'i, T> for Return<T> where T: Copy {
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
+        ParseResult::Good(self.0, input)
     }
 }
 
