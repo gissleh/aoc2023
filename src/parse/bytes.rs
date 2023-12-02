@@ -83,6 +83,24 @@ impl<'i, const N: usize> Parser<'i, &'i [u8]> for BytesUntilEither<N> {
     }
 }
 
+#[derive(Copy, Clone)]
+struct Word;
+
+impl<'i> Parser<'i, &'i [u8]> for Word {
+    #[inline]
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
+        let len = input.iter().take_while(|c| match **c {
+            b'a'..=b'z' | b'A'..=b'Z' => true,
+            _ => false,
+        }).count();
+
+        if len > 0 {
+            ParseResult::Good(&input[..len], &input[len..])
+        } else {
+            ParseResult::new_bad("not a word")
+        }
+    }
+}
 
 #[inline]
 pub fn everything<'i>() -> impl Parser<'i, &'i [u8]> {
@@ -106,11 +124,7 @@ pub fn n_bytes<'i, const N: usize>() -> impl Parser<'i, [u8; N]> { NBytes::<N> }
 pub fn bytes_until<'i>(b: u8, eat: bool) -> impl Parser<'i, &'i [u8]> { BytesUntil(b, eat) }
 
 #[inline]
-pub fn word<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntilEither([b' ', b',', b';', b'\n'], true).or(line()) }
-
-#[inline]
-pub fn word_only<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntilEither([b' ', b',', b';', b'\n'], false).or(line()) }
-
+pub fn word<'i>() -> impl Parser<'i, &'i [u8]> { Word }
 
 #[inline]
 pub fn line<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntil(b'\n', true) }
