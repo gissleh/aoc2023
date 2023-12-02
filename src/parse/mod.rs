@@ -18,6 +18,7 @@ use filter::{InRange, Filter};
 use rewind::Rewind;
 use vanguard::Vanguard;
 use crate::parse::cap::{CappedBy, QuotedBy};
+use crate::parse::repeat::RepeatFold;
 
 mod repeat;
 mod skip;
@@ -194,6 +195,14 @@ pub trait Parser<'i, T>: Sized + Copy {
     fn repeat_n<R>(self, amount: usize) -> Repeat<Self, T, R> {
         Repeat::new(self, amount)
     }
+
+    #[inline]
+    fn repeat_fold<FI, FS, TA>(self, init_func: FI, step_func: FS) -> RepeatFold<Self, FI, FS, T, TA>
+        where FI: Fn() -> TA + Copy,
+              FS: Fn(TA, T) -> TA + Copy {
+        RepeatFold::new(self, init_func, step_func)
+    }
+
 
     /// Count the repetitions. This returns an error if it empty.
     #[inline]

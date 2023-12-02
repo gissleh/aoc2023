@@ -141,6 +141,59 @@ impl<'i, P, T> Parser<'i, usize> for Count<P, T> where P: Parser<'i, T> {
     }
 }
 
+pub struct RepeatFold<P, FI, FS, TP, TA> {
+    parser: P,
+    init_func: FI,
+    step_func: FS,
+    spooky_ghost: PhantomData<(TP, TA)>,
+}
+
+impl<P, FI, FS, TP, TA> RepeatFold<P, FI, FS, TP, TA>
+    where FI: Fn() -> TA + Copy,
+          FS: Fn(TA, TP) -> TA + Copy {
+    pub fn new(parser: P, init_func: FI, step_func: FS) -> Self {
+        Self{parser, init_func, step_func, spooky_ghost: Default::default()}
+    }
+}
+
+impl<P, FI, FS, TP, TA> Copy for RepeatFold<P, FI, FS, TP, TA> where P: Copy, FI: Copy, FS: Copy {}
+
+impl<P, FI, FS, TP, TA> Clone for RepeatFold<P, FI, FS, TP, TA> where P: Clone, FI: Clone, FS: Clone {
+    fn clone(&self) -> Self {
+        Self {
+            parser: self.parser.clone(),
+            init_func: self.init_func.clone(),
+            step_func: self.step_func.clone(),
+            spooky_ghost: self.spooky_ghost.clone(),
+        }
+    }
+}
+
+impl<'i, P, FI, FS, TP, TA> Parser<'i, TA> for RepeatFold<P, FI, FS, TP, TA>
+    where P: Copy + Parser<'i, TP>,
+          FI: Fn() -> TA + Copy,
+          FS: Fn(TA, TP) -> TA + Copy {
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TA> {
+        let mut acc = (self.init_func)();
+
+        match self.parser.parse_at_index(input, 0) {
+            ParseResult::Good(res, mut current_input) => {
+                let mut index = 1;
+
+                acc = (self.step_func)(acc, res);
+                while let ParseResult::Good(res, new_input) = self.parser.parse_at_index(current_input, index) {
+                    acc = (self.step_func)(acc, res);
+                    current_input = new_input;
+                    index += 1;
+                }
+
+                ParseResult::Good(acc, current_input)
+            }
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in RepeatFold")
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use arrayvec::ArrayVec;
