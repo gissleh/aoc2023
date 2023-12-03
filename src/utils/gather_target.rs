@@ -19,7 +19,10 @@ impl<T> GatherTarget<T> for Vec<T> {
     }
 }
 
-impl<const N: usize, T> GatherTarget<T> for [T; N] where T: Default + Copy {
+impl<const N: usize, T> GatherTarget<T> for [T; N]
+where
+    T: Default + Copy,
+{
     fn start_gathering(_size_hint: usize) -> Self {
         [T::default(); N]
     }
@@ -30,7 +33,10 @@ impl<const N: usize, T> GatherTarget<T> for [T; N] where T: Default + Copy {
     }
 }
 
-impl<const N: usize, T> GatherTarget<T> for ([T; N], usize) where T: Default + Copy {
+impl<const N: usize, T> GatherTarget<T> for ([T; N], usize)
+where
+    T: Default + Copy,
+{
     fn start_gathering(_size_hint: usize) -> Self {
         ([T::default(); N], 0)
     }
@@ -53,7 +59,10 @@ impl<const N: usize, T> GatherTarget<T> for ArrayVec<T, N> {
     }
 }
 
-impl<A, T> GatherTarget<T> for SmallVec<A> where A: Array<Item=T> {
+impl<A, T> GatherTarget<T> for SmallVec<A>
+where
+    A: Array<Item = T>,
+{
     fn start_gathering(_size_hint: usize) -> Self {
         SmallVec::new()
     }
@@ -64,8 +73,13 @@ impl<A, T> GatherTarget<T> for SmallVec<A> where A: Array<Item=T> {
     }
 }
 
-impl<T> GatherTarget<T> for (T, T) where T: Default {
-    fn start_gathering(_size_hint: usize) -> Self { (T::default(), T::default()) }
+impl<T> GatherTarget<T> for (T, T)
+where
+    T: Default,
+{
+    fn start_gathering(_size_hint: usize) -> Self {
+        (T::default(), T::default())
+    }
 
     fn gather_into(&mut self, index: usize, value: T) -> bool {
         match index {
@@ -77,8 +91,13 @@ impl<T> GatherTarget<T> for (T, T) where T: Default {
     }
 }
 
-impl<T> GatherTarget<T> for (T, T, T) where T: Default {
-    fn start_gathering(_size_hint: usize) -> Self { (T::default(), T::default(), T::default()) }
+impl<T> GatherTarget<T> for (T, T, T)
+where
+    T: Default,
+{
+    fn start_gathering(_size_hint: usize) -> Self {
+        (T::default(), T::default(), T::default())
+    }
 
     fn gather_into(&mut self, index: usize, value: T) -> bool {
         match index {
@@ -91,8 +110,13 @@ impl<T> GatherTarget<T> for (T, T, T) where T: Default {
     }
 }
 
-impl<T> GatherTarget<T> for (T, T, T, T) where T: Default {
-    fn start_gathering(_size_hint: usize) -> Self { (T::default(), T::default(), T::default(), T::default()) }
+impl<T> GatherTarget<T> for (T, T, T, T)
+where
+    T: Default,
+{
+    fn start_gathering(_size_hint: usize) -> Self {
+        (T::default(), T::default(), T::default(), T::default())
+    }
 
     fn gather_into(&mut self, index: usize, value: T) -> bool {
         match index {
@@ -106,8 +130,19 @@ impl<T> GatherTarget<T> for (T, T, T, T) where T: Default {
     }
 }
 
-impl<T> GatherTarget<T> for (T, T, T, T, T) where T: Default {
-    fn start_gathering(_size_hint: usize) -> Self { (T::default(), T::default(), T::default(), T::default(), T::default()) }
+impl<T> GatherTarget<T> for (T, T, T, T, T)
+where
+    T: Default,
+{
+    fn start_gathering(_size_hint: usize) -> Self {
+        (
+            T::default(),
+            T::default(),
+            T::default(),
+            T::default(),
+            T::default(),
+        )
+    }
 
     fn gather_into(&mut self, index: usize, value: T) -> bool {
         match index {
@@ -122,8 +157,20 @@ impl<T> GatherTarget<T> for (T, T, T, T, T) where T: Default {
     }
 }
 
-impl<T> GatherTarget<T> for (T, T, T, T, T, T) where T: Default {
-    fn start_gathering(_size_hint: usize) -> Self { (T::default(), T::default(), T::default(), T::default(), T::default(), T::default()) }
+impl<T> GatherTarget<T> for (T, T, T, T, T, T)
+where
+    T: Default,
+{
+    fn start_gathering(_size_hint: usize) -> Self {
+        (
+            T::default(),
+            T::default(),
+            T::default(),
+            T::default(),
+            T::default(),
+            T::default(),
+        )
+    }
 
     fn gather_into(&mut self, index: usize, value: T) -> bool {
         match index {

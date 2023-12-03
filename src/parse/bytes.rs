@@ -1,4 +1,4 @@
-use super::{Parser, ParseResult};
+use super::{ParseResult, Parser};
 
 #[derive(Copy, Clone)]
 struct Everything;
@@ -65,7 +65,7 @@ impl<'i> Parser<'i, &'i [u8]> for BytesUntil {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
         match input.iter().position(|v| *v == self.0) {
             Some(pos) => ParseResult::Good(&input[..pos], &input[pos + (self.1 as usize)..]),
-            None => ParseResult::new_bad("Byte not found")
+            None => ParseResult::new_bad("Byte not found"),
         }
     }
 }
@@ -78,7 +78,7 @@ impl<'i, const N: usize> Parser<'i, &'i [u8]> for BytesUntilEither<N> {
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
         match input.iter().position(|v| self.0.contains(v)) {
             Some(pos) => ParseResult::Good(&input[..pos], &input[pos + (self.1 as usize)..]),
-            None => ParseResult::new_bad("Either byte not found")
+            None => ParseResult::new_bad("Either byte not found"),
         }
     }
 }
@@ -89,10 +89,13 @@ struct Word;
 impl<'i> Parser<'i, &'i [u8]> for Word {
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
-        let len = input.iter().take_while(|c| match **c {
-            b'a'..=b'z' | b'A'..=b'Z' => true,
-            _ => false,
-        }).count();
+        let len = input
+            .iter()
+            .take_while(|c| match **c {
+                b'a'..=b'z' | b'A'..=b'Z' => true,
+                _ => false,
+            })
+            .count();
 
         if len > 0 {
             ParseResult::Good(&input[..len], &input[len..])
@@ -118,13 +121,21 @@ pub fn any_byte<'i>() -> impl Parser<'i, u8> {
 }
 
 #[inline]
-pub fn n_bytes<'i, const N: usize>() -> impl Parser<'i, [u8; N]> { NBytes::<N> }
+pub fn n_bytes<'i, const N: usize>() -> impl Parser<'i, [u8; N]> {
+    NBytes::<N>
+}
 
 #[inline]
-pub fn bytes_until<'i>(b: u8, eat: bool) -> impl Parser<'i, &'i [u8]> { BytesUntil(b, eat) }
+pub fn bytes_until<'i>(b: u8, eat: bool) -> impl Parser<'i, &'i [u8]> {
+    BytesUntil(b, eat)
+}
 
 #[inline]
-pub fn word<'i>() -> impl Parser<'i, &'i [u8]> { Word }
+pub fn word<'i>() -> impl Parser<'i, &'i [u8]> {
+    Word
+}
 
 #[inline]
-pub fn line<'i>() -> impl Parser<'i, &'i [u8]> { BytesUntil(b'\n', true) }
+pub fn line<'i>() -> impl Parser<'i, &'i [u8]> {
+    BytesUntil(b'\n', true)
+}

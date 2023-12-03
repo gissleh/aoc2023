@@ -3,8 +3,8 @@ use common::aoc::Day;
 use common::ds::Graph;
 use common::geo::Point;
 use common::grid::Grid;
-use common::parse::{Parser, any_byte};
-use common::search::{Search, bfs, WithCost, dijkstra};
+use common::parse::{any_byte, Parser};
+use common::search::{bfs, dijkstra, Search, WithCost};
 
 type MazeGrid = Grid<Maze, [Maze; 8192]>;
 type MazeGraph = Graph<Maze, Point<usize>, (u32, u32, u32), 32>;
@@ -25,7 +25,10 @@ pub fn main(day: &mut Day, input: &[u8]) {
 
 fn p1_graph(graph: &MazeGraph) -> u32 {
     let initial_pos = graph.find(&Maze::Entrance).unwrap();
-    let initial_state = State { pos: initial_pos, keys: 0 };
+    let initial_state = State {
+        pos: initial_pos,
+        keys: 0,
+    };
     let target_mask = (1 << (graph.len() - 1)) - 1;
 
     dijkstra()
@@ -48,11 +51,13 @@ fn p1_graph(graph: &MazeGraph) -> u32 {
             }
 
             None
-        }).unwrap()
+        })
+        .unwrap()
 }
 
 fn p2_graph(graph: &MazeGraph) -> u32 {
-    let initial_pos_array: ArrayVec<usize, 4> = graph.nodes()
+    let initial_pos_array: ArrayVec<usize, 4> = graph
+        .nodes()
         .filter(|(_, m, ..)| **m == Maze::Entrance)
         .map(|(i, ..)| i)
         .collect();
@@ -61,7 +66,10 @@ fn p2_graph(graph: &MazeGraph) -> u32 {
         initial_pos[i] = *pos;
     }
 
-    let initial_state = State { pos: initial_pos, keys: 0 };
+    let initial_state = State {
+        pos: initial_pos,
+        keys: 0,
+    };
     let target_mask = (1 << (graph.len() - 4)) - 1;
 
     dijkstra()
@@ -86,7 +94,8 @@ fn p2_graph(graph: &MazeGraph) -> u32 {
             }
 
             None
-        }).unwrap()
+        })
+        .unwrap()
 }
 
 fn build_graph(grid: &MazeGrid) -> MazeGraph {
@@ -95,7 +104,9 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
     for (pos, cell) in grid.iter() {
         match *cell {
             Maze::Door(_) | Maze::Wall | Maze::Floor => {}
-            _ => { graph.create_node(*cell, pos); }
+            _ => {
+                graph.create_node(*cell, pos);
+            }
         }
     }
 
@@ -110,7 +121,9 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
             let mut res = None;
 
             match grid[pos] {
-                Maze::Wall => { return None; }
+                Maze::Wall => {
+                    return None;
+                }
                 Maze::Floor => {}
                 Maze::Key(mask) => {
                     keys_found |= mask;
@@ -130,7 +143,11 @@ fn build_graph(grid: &MazeGrid) -> MazeGraph {
         });
 
         for (cell, steps, keys_required, keys_found) in edges {
-            graph.connect(i, graph.find(&cell).unwrap(), (steps, keys_required, keys_found));
+            graph.connect(
+                i,
+                graph.find(&cell).unwrap(),
+                (steps, keys_required, keys_found),
+            );
         }
     }
 
@@ -156,13 +173,19 @@ fn change_grid_for_p2(grid: &MazeGrid) -> MazeGrid {
 
 fn p1_naive(grid: &MazeGrid) -> u32 {
     let initial_pos = grid.find(&Maze::Entrance).unwrap();
-    let initial_state = State { pos: initial_pos, keys: 0 };
+    let initial_state = State {
+        pos: initial_pos,
+        keys: 0,
+    };
     let target_mask = (1 << grid.count_by(|v| v.is_key())) - 1;
 
-    bfs().with_initial_state(WithCost(initial_state, 0))
+    bfs()
+        .with_initial_state(WithCost(initial_state, 0))
         .find(|bfs, WithCost(mut state, steps)| {
             match grid[state.pos] {
-                Maze::Wall => { return None; }
+                Maze::Wall => {
+                    return None;
+                }
                 Maze::Key(mask) => {
                     state.keys |= mask;
                     if state.keys == target_mask {
@@ -183,7 +206,8 @@ fn p1_naive(grid: &MazeGrid) -> u32 {
             }
 
             None
-        }).unwrap()
+        })
+        .unwrap()
 }
 
 #[allow(dead_code)]
@@ -191,18 +215,23 @@ fn p2_naive(grid: &MazeGrid) -> u32 {
     let initial_pos = grid.find(&Maze::Entrance).unwrap();
     let initial_state = State {
         pos: [
-            initial_pos, initial_pos + Point::new(2, 0),
-            initial_pos + Point::new(0, 2), initial_pos + Point::new(2, 2),
+            initial_pos,
+            initial_pos + Point::new(2, 0),
+            initial_pos + Point::new(0, 2),
+            initial_pos + Point::new(2, 2),
         ],
         keys: 0,
     };
     let target_mask = (1 << grid.count_by(|v| v.is_key())) - 1;
 
-    bfs().with_initial_state(WithCost(initial_state, 0))
+    bfs()
+        .with_initial_state(WithCost(initial_state, 0))
         .find(|bfs, WithCost(mut state, steps)| {
             for pos in state.pos.iter() {
                 match grid[*pos] {
-                    Maze::Wall => { return None; }
+                    Maze::Wall => {
+                        return None;
+                    }
                     Maze::Key(mask) => {
                         state.keys |= mask;
                         if state.keys == target_mask {
@@ -228,7 +257,8 @@ fn p2_naive(grid: &MazeGrid) -> u32 {
             }
 
             None
-        }).unwrap()
+        })
+        .unwrap()
 }
 
 fn parse_grid(input: &[u8]) -> MazeGrid {
@@ -239,7 +269,9 @@ fn parse_grid(input: &[u8]) -> MazeGrid {
         b'a'..=b'z' => Maze::Key(1 << (b - b'a')),
         b'A'..=b'Z' => Maze::Door(1 << (b - b'A')),
         _ => panic!("{} is not a valid maze cell", b as char),
-    })).parse(input).unwrap()
+    }))
+    .parse(input)
+    .unwrap()
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]

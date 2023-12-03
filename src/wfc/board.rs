@@ -10,7 +10,7 @@ pub trait Board: Sized {
             for x in 0..w {
                 if let Some(cell) = self.board_cell(x, y) {
                     if *cell == 0 {
-                        return true
+                        return true;
                     }
                 }
             }
@@ -20,7 +20,12 @@ pub trait Board: Sized {
     }
 
     #[inline]
-    fn full_propagate<F: Fn(u64, usize, usize) -> u64>(&mut self, except_x: usize, except_y: usize, f: F) {
+    fn full_propagate<F: Fn(u64, usize, usize) -> u64>(
+        &mut self,
+        except_x: usize,
+        except_y: usize,
+        f: F,
+    ) {
         let (w, h) = self.board_size();
         for y in 0..h {
             let except = y == except_y;
@@ -36,7 +41,7 @@ pub trait Board: Sized {
     }
 }
 
-pub struct UnFlattenedBoard<B: Board> (pub B, pub usize);
+pub struct UnFlattenedBoard<B: Board>(pub B, pub usize);
 
 impl<B: Board> Board for UnFlattenedBoard<B> {
     #[inline]
@@ -80,7 +85,12 @@ impl<const S: usize> Board for [u64; S] {
         }
     }
 
-    fn full_propagate<F: Fn(u64, usize, usize) -> u64>(&mut self, except_x: usize, except_y: usize, f: F) {
+    fn full_propagate<F: Fn(u64, usize, usize) -> u64>(
+        &mut self,
+        except_x: usize,
+        except_y: usize,
+        f: F,
+    ) {
         let except = except_y == 0;
         for (i, v) in self.iter_mut().enumerate() {
             if except && i == except_x {

@@ -1,13 +1,16 @@
-use std::hash::Hash;
-use hashbrown::HashSet;
 use crate::search::Search;
+use hashbrown::HashSet;
+use std::hash::Hash;
 
 struct DFS<S> {
     seen: HashSet<S>,
     stack: Vec<S>,
 }
 
-impl<S> Search<S> for DFS<S> where S: Clone + Hash + Eq {
+impl<S> Search<S> for DFS<S>
+where
+    S: Clone + Hash + Eq,
+{
     fn reset(&mut self, initial_state: S) {
         self.seen.clear();
         self.stack.clear();
@@ -26,7 +29,10 @@ impl<S> Search<S> for DFS<S> where S: Clone + Hash + Eq {
     }
 }
 
-pub fn dfs<S>() -> impl Search<S> where S: Clone + Hash + Eq {
+pub fn dfs<S>() -> impl Search<S>
+where
+    S: Clone + Hash + Eq,
+{
     DFS {
         stack: Vec::with_capacity(512),
         seen: HashSet::with_capacity(512),
@@ -37,7 +43,7 @@ pub fn dfs<S>() -> impl Search<S> where S: Clone + Hash + Eq {
 mod tests {
     use super::*;
     use crate::geo::Point;
-    use crate::search::tests::{MAZE_02, search_maze};
+    use crate::search::tests::{search_maze, MAZE_02};
 
     #[test]
     fn dfs_can_gather_too() {
@@ -45,11 +51,15 @@ mod tests {
 
         dfs.reset(Point::new(4usize, 4usize));
         let findings: Vec<(char, Point<usize>)> = dfs.gather(search_maze(MAZE_02));
-        assert_eq!(findings.as_slice(), &[
-            ('b', Point::new(4, 5)),
-            ('r', Point::new(6, 4)),
-            ('l', Point::new(1, 4)),
-            ('u', Point::new(4, 1)),
-        ], "The last in reading order goes first with DFS.");
+        assert_eq!(
+            findings.as_slice(),
+            &[
+                ('b', Point::new(4, 5)),
+                ('r', Point::new(6, 4)),
+                ('l', Point::new(1, 4)),
+                ('u', Point::new(4, 1)),
+            ],
+            "The last in reading order goes first with DFS."
+        );
     }
 }

@@ -1,14 +1,17 @@
+use super::Search;
+use hashbrown::HashSet;
 use std::collections::VecDeque;
 use std::hash::Hash;
-use hashbrown::HashSet;
-use super::Search;
 
 struct BFS<S> {
     seen: HashSet<S>,
     queue: VecDeque<S>,
 }
 
-impl<S> Search<S> for BFS<S> where S: Clone + Hash + Eq {
+impl<S> Search<S> for BFS<S>
+where
+    S: Clone + Hash + Eq,
+{
     fn reset(&mut self, initial_state: S) {
         self.seen.clear();
         self.queue.clear();
@@ -27,7 +30,10 @@ impl<S> Search<S> for BFS<S> where S: Clone + Hash + Eq {
     }
 }
 
-pub fn bfs<S>() -> impl Search<S> where S: Clone + Hash + Eq {
+pub fn bfs<S>() -> impl Search<S>
+where
+    S: Clone + Hash + Eq,
+{
     BFS {
         queue: VecDeque::with_capacity(512),
         seen: HashSet::with_capacity(512),
@@ -38,7 +44,7 @@ pub fn bfs<S>() -> impl Search<S> where S: Clone + Hash + Eq {
 mod tests {
     use super::*;
     use crate::geo::Point;
-    use crate::search::tests::{MAZE_01, MAZE_02, search_maze};
+    use crate::search::tests::{search_maze, MAZE_01, MAZE_02};
 
     #[test]
     fn bfs_can_gather() {
@@ -46,23 +52,29 @@ mod tests {
 
         bfs.reset(Point::new(4usize, 4usize));
         let findings: Vec<(char, Point<usize>)> = bfs.gather(search_maze(MAZE_02));
-        assert_eq!(findings.as_slice(), &[
-            ('b', Point::new(4, 5)),
-            ('r', Point::new(6, 4)),
-            ('u', Point::new(4, 1)),
-            ('l', Point::new(1, 4)),
-        ]);
+        assert_eq!(
+            findings.as_slice(),
+            &[
+                ('b', Point::new(4, 5)),
+                ('r', Point::new(6, 4)),
+                ('u', Point::new(4, 1)),
+                ('l', Point::new(1, 4)),
+            ]
+        );
 
         bfs.reset(Point::new(1usize, 1usize));
         let findings: Vec<(char, Point<usize>)> = bfs.gather(search_maze(MAZE_01));
-        assert_eq!(findings.as_slice(), &[
-            ('f', Point::new(1, 5)),
-            ('g', Point::new(24, 2)),
-            ('a', Point::new(26, 10)),
-            ('d', Point::new(24, 7)),
-            ('b', Point::new(28, 10)),
-            ('c', Point::new(22, 7)),
-            ('e', Point::new(8, 5)),
-        ]);
+        assert_eq!(
+            findings.as_slice(),
+            &[
+                ('f', Point::new(1, 5)),
+                ('g', Point::new(24, 2)),
+                ('a', Point::new(26, 10)),
+                ('d', Point::new(24, 7)),
+                ('b', Point::new(28, 10)),
+                ('c', Point::new(22, 7)),
+                ('e', Point::new(8, 5)),
+            ]
+        );
     }
 }

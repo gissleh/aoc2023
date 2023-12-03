@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 mod board;
 mod util;
 
-pub use util::*;
 pub use board::*;
+pub use util::*;
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum RunResult {
@@ -57,8 +57,7 @@ pub struct ConjunctionRule<B: Board, R1: Rule<B>, R2: Rule<B>> {
 
 impl<B: Board, R1: Rule<B>, R2: Rule<B>> Rule<B> for ConjunctionRule<B, R1, R2> {
     fn select(&self, board: &B) -> Option<(usize, usize)> {
-        self.r1.select(board)
-            .or_else(|| self.r2.select(board))
+        self.r1.select(board).or_else(|| self.r2.select(board))
     }
 
     fn collapse(&self, board: &mut B, x: usize, y: usize) -> bool {
@@ -77,11 +76,17 @@ struct SelectorFN<B: Board, F: Fn(&B) -> Option<(usize, usize)>>(F, PhantomData<
 
 impl<B: Board, F: Fn(&B) -> Option<(usize, usize)>> Rule<B> for SelectorFN<B, F> {
     #[inline]
-    fn select(&self, board: &B) -> Option<(usize, usize)> { self.0(board) }
+    fn select(&self, board: &B) -> Option<(usize, usize)> {
+        self.0(board)
+    }
     #[inline]
-    fn collapse(&self, _board: &mut B, _x: usize, _y: usize) -> bool { false }
+    fn collapse(&self, _board: &mut B, _x: usize, _y: usize) -> bool {
+        false
+    }
     #[inline]
-    fn propagate(&self, _board: &mut B, _x: usize, _y: usize, _c: u64) -> bool { false }
+    fn propagate(&self, _board: &mut B, _x: usize, _y: usize, _c: u64) -> bool {
+        false
+    }
 }
 
 pub fn selector<B: Board, F: Fn(&B) -> Option<(usize, usize)>>(f: F) -> impl Rule<B> {
@@ -92,11 +97,17 @@ struct CollapserFN<B: Board, F: Fn(&mut B, usize, usize) -> bool>(F, PhantomData
 
 impl<B: Board, F: Fn(&mut B, usize, usize) -> bool> Rule<B> for CollapserFN<B, F> {
     #[inline]
-    fn select(&self, _board: &B) -> Option<(usize, usize)> { None }
+    fn select(&self, _board: &B) -> Option<(usize, usize)> {
+        None
+    }
     #[inline]
-    fn collapse(&self, board: &mut B, x: usize, y: usize) -> bool { self.0(board, x, y) }
+    fn collapse(&self, board: &mut B, x: usize, y: usize) -> bool {
+        self.0(board, x, y)
+    }
     #[inline]
-    fn propagate(&self, _board: &mut B, _x: usize, _y: usize, _c: u64) -> bool { false }
+    fn propagate(&self, _board: &mut B, _x: usize, _y: usize, _c: u64) -> bool {
+        false
+    }
 }
 
 pub fn collapser<B: Board, F: Fn(&mut B, usize, usize) -> bool>(f: F) -> impl Rule<B> {
@@ -107,11 +118,17 @@ struct PropagatorFN<B: Board, F: Fn(&mut B, usize, usize, u64) -> bool>(F, Phant
 
 impl<B: Board, F: Fn(&mut B, usize, usize, u64) -> bool> Rule<B> for PropagatorFN<B, F> {
     #[inline]
-    fn select(&self, _board: &B) -> Option<(usize, usize)> { None }
+    fn select(&self, _board: &B) -> Option<(usize, usize)> {
+        None
+    }
     #[inline]
-    fn collapse(&self, _board: &mut B, _x: usize, _y: usize) -> bool { false }
+    fn collapse(&self, _board: &mut B, _x: usize, _y: usize) -> bool {
+        false
+    }
     #[inline]
-    fn propagate(&self, board: &mut B, x: usize, y: usize, c: u64) -> bool { self.0(board, x, y, c) }
+    fn propagate(&self, board: &mut B, x: usize, y: usize, c: u64) -> bool {
+        self.0(board, x, y, c)
+    }
 }
 
 pub fn propagator<B: Board, F: Fn(&mut B, usize, usize, u64) -> bool>(f: F) -> impl Rule<B> {

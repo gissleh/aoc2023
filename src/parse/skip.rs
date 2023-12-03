@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
-use crate::parse::{Parser, ParseResult};
+use crate::parse::{ParseResult, Parser};
 use crate::utils::gather_target::GatherTarget;
+use std::marker::PhantomData;
 
 struct Skip<P, T> {
     parser: P,
@@ -9,14 +9,23 @@ struct Skip<P, T> {
 
 impl<P, T> Copy for Skip<P, T> where P: Copy {}
 
-impl<P, T> Clone for Skip<P, T> where P: Clone {
+impl<P, T> Clone for Skip<P, T>
+where
+    P: Clone,
+{
     #[inline]
     fn clone(&self) -> Self {
-        Self { parser: self.parser.clone(), spooky_ghost: Default::default() }
+        Self {
+            parser: self.parser.clone(),
+            spooky_ghost: Default::default(),
+        }
     }
 }
 
-impl<'i, P, T> Parser<'i, Option<T>> for Skip<P, T> where P: Parser<'i, T> {
+impl<'i, P, T> Parser<'i, Option<T>> for Skip<P, T>
+where
+    P: Parser<'i, T>,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, Option<T>> {
         match self.parser.parse(input) {
@@ -27,8 +36,14 @@ impl<'i, P, T> Parser<'i, Option<T>> for Skip<P, T> where P: Parser<'i, T> {
 }
 
 #[inline]
-pub fn skip<'i, P, T>(parser: P) -> impl Parser<'i, Option<T>> where P: Parser<'i, T> {
-    Skip { parser, spooky_ghost: Default::default() }
+pub fn skip<'i, P, T>(parser: P) -> impl Parser<'i, Option<T>>
+where
+    P: Parser<'i, T>,
+{
+    Skip {
+        parser,
+        spooky_ghost: Default::default(),
+    }
 }
 
 pub struct ThenSkip<PV, PS, TV, TS> {
@@ -48,9 +63,18 @@ impl<PV, PS, TV, TS> ThenSkip<PV, PS, TV, TS> {
     }
 }
 
-impl<'i, PV, PS, TV, TS> Copy for ThenSkip<PV, PS, TV, TS> where PS: Parser<'i, TS>, PV: Parser<'i, TV> {}
+impl<'i, PV, PS, TV, TS> Copy for ThenSkip<PV, PS, TV, TS>
+where
+    PS: Parser<'i, TS>,
+    PV: Parser<'i, TV>,
+{
+}
 
-impl<'i, PV, PS, TV, TS> Clone for ThenSkip<PV, PS, TV, TS> where PS: Parser<'i, TS>, PV: Parser<'i, TV> {
+impl<'i, PV, PS, TV, TS> Clone for ThenSkip<PV, PS, TV, TS>
+where
+    PS: Parser<'i, TS>,
+    PV: Parser<'i, TV>,
+{
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -61,15 +85,19 @@ impl<'i, PV, PS, TV, TS> Clone for ThenSkip<PV, PS, TV, TS> where PS: Parser<'i,
     }
 }
 
-impl<'i, PV, PS, TV, TS> Parser<'i, TV> for ThenSkip<PV, PS, TV, TS> where PV: Parser<'i, TV>, PS: Parser<'i, TS> {
+impl<'i, PV, PS, TV, TS> Parser<'i, TV> for ThenSkip<PV, PS, TV, TS>
+where
+    PV: Parser<'i, TV>,
+    PS: Parser<'i, TS>,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TV> {
         match self.value_parser.parse(input) {
             ParseResult::Good(tv, input) => match self.skip_parser.parse(input) {
                 ParseResult::Good(_, input) => ParseResult::Good(tv, input),
-                ParseResult::Bad(_) => ParseResult::Good(tv, input)
-            }
-            ParseResult::Bad(err) => ParseResult::Bad(err)
+                ParseResult::Bad(_) => ParseResult::Good(tv, input),
+            },
+            ParseResult::Bad(err) => ParseResult::Bad(err),
         }
     }
 }
@@ -91,9 +119,18 @@ impl<PV, PS, TV, TS> SkipAll<PV, PS, TV, TS> {
     }
 }
 
-impl<'i, PV, PS, TV, TS> Copy for SkipAll<PV, PS, TV, TS> where PS: Parser<'i, TS>, PV: Parser<'i, TV> {}
+impl<'i, PV, PS, TV, TS> Copy for SkipAll<PV, PS, TV, TS>
+where
+    PS: Parser<'i, TS>,
+    PV: Parser<'i, TV>,
+{
+}
 
-impl<'i, PV, PS, TV, TS> Clone for SkipAll<PV, PS, TV, TS> where PS: Parser<'i, TS>, PV: Parser<'i, TV> {
+impl<'i, PV, PS, TV, TS> Clone for SkipAll<PV, PS, TV, TS>
+where
+    PS: Parser<'i, TS>,
+    PV: Parser<'i, TV>,
+{
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -104,7 +141,11 @@ impl<'i, PV, PS, TV, TS> Clone for SkipAll<PV, PS, TV, TS> where PS: Parser<'i, 
     }
 }
 
-impl<'i, PV, PS, TV, TS> Parser<'i, TV> for SkipAll<PV, PS, TV, TS> where PV: Parser<'i, TV>, PS: Parser<'i, TS> {
+impl<'i, PV, PS, TV, TS> Parser<'i, TV> for SkipAll<PV, PS, TV, TS>
+where
+    PV: Parser<'i, TV>,
+    PS: Parser<'i, TS>,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TV> {
         match self.value_parser.parse(input) {
@@ -115,12 +156,15 @@ impl<'i, PV, PS, TV, TS> Parser<'i, TV> for SkipAll<PV, PS, TV, TS> where PV: Pa
 
                 ParseResult::Good(tv, input)
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err)
+            ParseResult::Bad(err) => ParseResult::Bad(err),
         }
     }
 
     #[inline]
-    fn parse_into<G>(&self, input: &'i [u8], target: &mut G, index: usize) -> ParseResult<'i, bool> where G: GatherTarget<TV> {
+    fn parse_into<G>(&self, input: &'i [u8], target: &mut G, index: usize) -> ParseResult<'i, bool>
+    where
+        G: GatherTarget<TV>,
+    {
         match self.value_parser.parse_into(input, target, index) {
             ParseResult::Good(full, mut input) => {
                 while let ParseResult::Good(_, new_input) = self.skip_parser.parse(input) {
@@ -129,20 +173,23 @@ impl<'i, PV, PS, TV, TS> Parser<'i, TV> for SkipAll<PV, PS, TV, TS> where PV: Pa
 
                 ParseResult::Good(full, input)
             }
-            ParseResult::Bad(err) => ParseResult::Bad(err)
+            ParseResult::Bad(err) => ParseResult::Bad(err),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::parse::unsigned_int;
     use super::*;
+    use crate::parse::unsigned_int;
 
     #[test]
     fn skip_skips_as_it_should() {
         assert_eq!(
-            b"Hello".then_skip(b',').then_skip(b' ').parse(b"Hello, World"),
+            b"Hello"
+                .then_skip(b',')
+                .then_skip(b' ')
+                .parse(b"Hello, World"),
             ParseResult::Good(b"Hello".as_slice(), b"World"),
         );
         assert_eq!(

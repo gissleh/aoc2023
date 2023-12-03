@@ -4,10 +4,10 @@ pub use dfs::dfs;
 pub use dijkstra::{dijkstra, DijkstraState};
 pub use utils::WithCost;
 
-mod utils;
 mod bfs;
 mod dfs;
 mod dijkstra;
+mod utils;
 
 pub trait Search<S>: Sized {
     fn reset(&mut self, initial_state: S);
@@ -23,7 +23,10 @@ pub trait Search<S>: Sized {
     /// Find the next state that returns Some(R) from the callback. This function will not
     /// reset the state between runs, and you could continue where you left off by calling it
     /// again if the search is for multiple objects.
-    fn find<F, R>(&mut self, f: F) -> Option<R> where F: Fn(&mut Self, S) -> Option<R> {
+    fn find<F, R>(&mut self, f: F) -> Option<R>
+    where
+        F: Fn(&mut Self, S) -> Option<R>,
+    {
         while let Some(state) = self.next_state() {
             if let Some(v) = f(self, state) {
                 return Some(v);
@@ -34,7 +37,11 @@ pub trait Search<S>: Sized {
     }
 
     /// maximize exhausts the search and returns the greatest value from it.
-    fn maximize<F, R>(&mut self, f: F) -> Option<R> where F: Fn(&mut Self, S) -> Option<R>, R: Ord {
+    fn maximize<F, R>(&mut self, f: F) -> Option<R>
+    where
+        F: Fn(&mut Self, S) -> Option<R>,
+        R: Ord,
+    {
         let mut king = None;
 
         while let Some(v) = self.find(&f) {
@@ -51,7 +58,11 @@ pub trait Search<S>: Sized {
     }
 
     /// Gather exhausts find_next, but will stop early if the collection referred to in G is full.
-    fn gather<G, F, R>(&mut self, f: F) -> G where F: Fn(&mut Self, S) -> Option<R>, G: GatherTarget<R> {
+    fn gather<G, F, R>(&mut self, f: F) -> G
+    where
+        F: Fn(&mut Self, S) -> Option<R>,
+        G: GatherTarget<R>,
+    {
         let mut gather_target = G::start_gathering(0);
         let mut index = 0;
 
@@ -75,7 +86,9 @@ pub(crate) mod tests {
     pub(crate) const MAZE_01: &[u8] = include_bytes!("./test_fixtures/maze01.txt");
     pub(crate) const MAZE_02: &[u8] = include_bytes!("./test_fixtures/maze02.txt");
 
-    pub(crate) fn search_maze<S: Search<Point<usize>>>(maze: &'static [u8]) -> impl Fn(&mut S, Point<usize>) -> Option<(char, Point<usize>)> {
+    pub(crate) fn search_maze<S: Search<Point<usize>>>(
+        maze: &'static [u8],
+    ) -> impl Fn(&mut S, Point<usize>) -> Option<(char, Point<usize>)> {
         let maze: Vec<&[u8]> = maze.split(|v| *v == b'\n').collect();
 
         move |search, p| {

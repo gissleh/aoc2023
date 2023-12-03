@@ -1,5 +1,5 @@
+use crate::parse::{ParseResult, Parser};
 use std::marker::PhantomData;
-use crate::parse::{Parser, ParseResult};
 
 pub struct Or<PL, PR, T> {
     parse_left: PL,
@@ -10,13 +10,26 @@ pub struct Or<PL, PR, T> {
 impl<PL, PR, T> Or<PL, PR, T> {
     #[inline]
     pub fn new(parse_left: PL, parse_right: PR) -> Self {
-        Self { parse_left, parse_right, spooky_ghost: Default::default() }
+        Self {
+            parse_left,
+            parse_right,
+            spooky_ghost: Default::default(),
+        }
     }
 }
 
-impl<PL, PR, T> Copy for Or<PL, PR, T> where PL: Copy, PR: Copy {}
+impl<PL, PR, T> Copy for Or<PL, PR, T>
+where
+    PL: Copy,
+    PR: Copy,
+{
+}
 
-impl<PL, PR, T> Clone for Or<PL, PR, T> where PL: Clone, PR: Clone {
+impl<PL, PR, T> Clone for Or<PL, PR, T>
+where
+    PL: Clone,
+    PR: Clone,
+{
     #[inline]
     fn clone(&self) -> Self {
         Self {
@@ -27,7 +40,11 @@ impl<PL, PR, T> Clone for Or<PL, PR, T> where PL: Clone, PR: Clone {
     }
 }
 
-impl<'i, PL, PR, T> Parser<'i, T> for Or<PL, PR, T> where PL: Parser<'i, T>, PR: Parser<'i, T> {
+impl<'i, PL, PR, T> Parser<'i, T> for Or<PL, PR, T>
+where
+    PL: Parser<'i, T>,
+    PR: Parser<'i, T>,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(t, new_input) = self.parse_left.parse(input) {
@@ -40,9 +57,9 @@ impl<'i, PL, PR, T> Parser<'i, T> for Or<PL, PR, T> where PL: Parser<'i, T>, PR:
 
 #[cfg(test)]
 mod tests {
-    use arrayvec::ArrayVec;
-    use crate::parse::{everything, signed_int};
     use super::*;
+    use crate::parse::{everything, signed_int};
+    use arrayvec::ArrayVec;
 
     #[test]
     fn or_works_as_it_should() {
@@ -53,16 +70,35 @@ mod tests {
             Print(&'i [u8]),
         }
 
-        let parser = b"noop".map_to(TestData::Noop)
-            .or(b"add ".and_instead(signed_int())
+        let parser = b"noop"
+            .map_to(TestData::Noop)
+            .or(b"add "
+                .and_instead(signed_int())
                 .and_discard(b' ')
                 .and(signed_int())
                 .map(|(a, b)| TestData::Add(a, b)))
-            .or(b"print ".and_instead(everything()).map(|s| TestData::Print(s)));
+            .or(b"print "
+                .and_instead(everything())
+                .map(|s| TestData::Print(s)));
 
-        assert_eq!(parser.parse(b"noop"), ParseResult::Good(TestData::Noop, b""));
-        assert_eq!(parser.parse(b"add -47 112"), ParseResult::Good(TestData::Add(-47, 112), b""));
-        assert_eq!(parser.parse(b"print Hello World"), ParseResult::Good(TestData::Print(b"Hello World"), b""));
-        assert_eq!(parser.parse(b"mul 183 929"), ParseResult::Bad(ArrayVec::try_from(["String does not match", "Left in And failed"].as_slice()).unwrap()));
+        assert_eq!(
+            parser.parse(b"noop"),
+            ParseResult::Good(TestData::Noop, b"")
+        );
+        assert_eq!(
+            parser.parse(b"add -47 112"),
+            ParseResult::Good(TestData::Add(-47, 112), b"")
+        );
+        assert_eq!(
+            parser.parse(b"print Hello World"),
+            ParseResult::Good(TestData::Print(b"Hello World"), b"")
+        );
+        assert_eq!(
+            parser.parse(b"mul 183 929"),
+            ParseResult::Bad(
+                ArrayVec::try_from(["String does not match", "Left in And failed"].as_slice())
+                    .unwrap()
+            )
+        );
     }
 }

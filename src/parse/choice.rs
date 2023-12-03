@@ -1,4 +1,4 @@
-use crate::parse::{Parser, ParseResult};
+use crate::parse::{ParseResult, Parser};
 
 pub trait Choices<'i, T>: Copy + Clone {
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T>;
@@ -32,7 +32,9 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>> Choices<'i, T> for (P1, P2) {
     }
 }
 
-impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3) {
+impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>> Choices<'i, T>
+    for (P1, P2, P3)
+{
     #[inline]
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(v, input) = self.0.parse(input) {
@@ -47,7 +49,9 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>> Choices<'i,
     }
 }
 
-impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3, P4) {
+impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>>
+    Choices<'i, T> for (P1, P2, P3, P4)
+{
     #[inline]
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(v, input) = self.0.parse(input) {
@@ -64,7 +68,16 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
     }
 }
 
-impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>, P5: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3, P4, P5) {
+impl<
+        'i,
+        T,
+        P1: Parser<'i, T>,
+        P2: Parser<'i, T>,
+        P3: Parser<'i, T>,
+        P4: Parser<'i, T>,
+        P5: Parser<'i, T>,
+    > Choices<'i, T> for (P1, P2, P3, P4, P5)
+{
     #[inline]
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(v, input) = self.0.parse(input) {
@@ -83,7 +96,17 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
     }
 }
 
-impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>, P5: Parser<'i, T>, P6: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3, P4, P5, P6) {
+impl<
+        'i,
+        T,
+        P1: Parser<'i, T>,
+        P2: Parser<'i, T>,
+        P3: Parser<'i, T>,
+        P4: Parser<'i, T>,
+        P5: Parser<'i, T>,
+        P6: Parser<'i, T>,
+    > Choices<'i, T> for (P1, P2, P3, P4, P5, P6)
+{
     #[inline]
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(v, input) = self.0.parse(input) {
@@ -104,7 +127,18 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
     }
 }
 
-impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>, P5: Parser<'i, T>, P6: Parser<'i, T>, P7: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3, P4, P5, P6, P7) {
+impl<
+        'i,
+        T,
+        P1: Parser<'i, T>,
+        P2: Parser<'i, T>,
+        P3: Parser<'i, T>,
+        P4: Parser<'i, T>,
+        P5: Parser<'i, T>,
+        P6: Parser<'i, T>,
+        P7: Parser<'i, T>,
+    > Choices<'i, T> for (P1, P2, P3, P4, P5, P6, P7)
+{
     #[inline]
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(v, input) = self.0.parse(input) {
@@ -127,7 +161,19 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
     }
 }
 
-impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>, P5: Parser<'i, T>, P6: Parser<'i, T>, P7: Parser<'i, T>, P8: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3, P4, P5, P6, P7, P8) {
+impl<
+        'i,
+        T,
+        P1: Parser<'i, T>,
+        P2: Parser<'i, T>,
+        P3: Parser<'i, T>,
+        P4: Parser<'i, T>,
+        P5: Parser<'i, T>,
+        P6: Parser<'i, T>,
+        P7: Parser<'i, T>,
+        P8: Parser<'i, T>,
+    > Choices<'i, T> for (P1, P2, P3, P4, P5, P6, P7, P8)
+{
     #[inline]
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(v, input) = self.0.parse(input) {
@@ -152,7 +198,20 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
     }
 }
 
-impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<'i, T>, P5: Parser<'i, T>, P6: Parser<'i, T>, P7: Parser<'i, T>, P8: Parser<'i, T>, P9: Parser<'i, T>> Choices<'i, T> for (P1, P2, P3, P4, P5, P6, P7, P8, P9) {
+impl<
+        'i,
+        T,
+        P1: Parser<'i, T>,
+        P2: Parser<'i, T>,
+        P3: Parser<'i, T>,
+        P4: Parser<'i, T>,
+        P5: Parser<'i, T>,
+        P6: Parser<'i, T>,
+        P7: Parser<'i, T>,
+        P8: Parser<'i, T>,
+        P9: Parser<'i, T>,
+    > Choices<'i, T> for (P1, P2, P3, P4, P5, P6, P7, P8, P9)
+{
     #[inline]
     fn parse_choice(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if let ParseResult::Good(v, input) = self.0.parse(input) {
@@ -179,18 +238,23 @@ impl<'i, T, P1: Parser<'i, T>, P2: Parser<'i, T>, P3: Parser<'i, T>, P4: Parser<
     }
 }
 
-
-struct Choice<C> (C);
+struct Choice<C>(C);
 
 impl<C> Copy for Choice<C> where C: Copy {}
 
-impl<C> Clone for Choice<C> where C: Clone {
+impl<C> Clone for Choice<C>
+where
+    C: Clone,
+{
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-impl<'i, C, T> Parser<'i, T> for Choice<C> where C: Choices<'i, T> {
+impl<'i, C, T> Parser<'i, T> for Choice<C>
+where
+    C: Choices<'i, T>,
+{
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         self.0.parse_choice(input)
     }
@@ -202,13 +266,20 @@ pub fn choice<'i, T, C: Choices<'i, T>>(choices: C) -> impl Parser<'i, T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parse::{everything, unsigned_int};
     use super::*;
+    use crate::parse::{everything, unsigned_int};
 
     #[test]
     fn choice_choices() {
         #[derive(Clone, Eq, PartialEq, Debug)]
-        enum Instruction<'i> { Set(u8, i64), Select(u8), Add(i64), Sub(i64), Print(u8), PrintText(&'i [u8]) }
+        enum Instruction<'i> {
+            Set(u8, i64),
+            Select(u8),
+            Add(i64),
+            Sub(i64),
+            Print(u8),
+            PrintText(&'i [u8]),
+        }
 
         let sep = b','.then_skip_all(b' ');
         let function = choice((
@@ -217,40 +288,38 @@ mod tests {
                     .and_discard(sep)
                     .and(unsigned_int())
                     .quoted_by(b'(', b')')
-                    .map(|(a, v)| Instruction::Set(a, v))
+                    .map(|(a, v)| Instruction::Set(a, v)),
             ),
             b"select".and_instead(
                 unsigned_int()
                     .quoted_by(b'(', b')')
-                    .map(|a| Instruction::Select(a))
+                    .map(|a| Instruction::Select(a)),
             ),
             b"add".and_instead(
                 unsigned_int()
                     .quoted_by(b'(', b')')
-                    .map(|v| Instruction::Add(v))
+                    .map(|v| Instruction::Add(v)),
             ),
             b"sub".and_instead(
                 unsigned_int()
                     .quoted_by(b'(', b')')
-                    .map(|v| Instruction::Sub(v))
+                    .map(|v| Instruction::Sub(v)),
             ),
             b"print".and_instead(
                 unsigned_int()
                     .quoted_by(b'(', b')')
-                    .map(|a| Instruction::Print(a))
+                    .map(|a| Instruction::Print(a)),
             ),
             b"print_text".and_instead(
                 everything()
                     .quoted_by(b'"', b'"')
                     .quoted_by(b'(', b')')
-                    .map(|text| Instruction::PrintText(text))
+                    .map(|text| Instruction::PrintText(text)),
             ),
         ));
-        let parser = function.delimited_by(
-            b';'
-                .then_skip_all(b' ')
-                .then_skip_all(b'\n')
-        ).repeat::<Vec<Instruction>>();
+        let parser = function
+            .delimited_by(b';'.then_skip_all(b' ').then_skip_all(b'\n'))
+            .repeat::<Vec<Instruction>>();
 
         assert_eq!(
             parser.parse(b"set(0, 64); set(1, 32); select(0); add(43); select(1); sub(39); print_text(\"a is: \"); print(0)"),

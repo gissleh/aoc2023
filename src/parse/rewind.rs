@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
-use crate::parse::ParseResult;
 use super::Parser;
+use crate::parse::ParseResult;
+use std::marker::PhantomData;
 
 pub struct Rewind<P, T> {
     parser: P,
@@ -9,11 +9,17 @@ pub struct Rewind<P, T> {
 
 impl<P, T> Rewind<P, T> {
     pub fn new(parser: P) -> Self {
-        Self { parser, spooky_ghost: Default::default() }
+        Self {
+            parser,
+            spooky_ghost: Default::default(),
+        }
     }
 }
 
-impl<'i, P, T> Parser<'i, T> for Rewind<P, T> where P: Parser<'i, T> {
+impl<'i, P, T> Parser<'i, T> for Rewind<P, T>
+where
+    P: Parser<'i, T>,
+{
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         match self.parser.parse(input) {
             ParseResult::Good(v, _) => ParseResult::Good(v, input),
@@ -31,8 +37,14 @@ impl<'i, P, T> Parser<'i, T> for Rewind<P, T> where P: Parser<'i, T> {
 
 impl<P, T> Copy for Rewind<P, T> where P: Copy {}
 
-impl<P, T> Clone for Rewind<P, T> where P: Clone {
+impl<P, T> Clone for Rewind<P, T>
+where
+    P: Clone,
+{
     fn clone(&self) -> Self {
-        Self { parser: self.parser.clone(), spooky_ghost: Default::default() }
+        Self {
+            parser: self.parser.clone(),
+            spooky_ghost: Default::default(),
+        }
     }
 }

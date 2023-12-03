@@ -1,11 +1,14 @@
+use crate::parse::{ParseResult, Parser};
 use std::marker::PhantomData;
 use std::ops::{AddAssign, MulAssign, Neg};
-use crate::parse::{Parser, ParseResult};
 
 #[derive(Copy, Clone)]
-struct Digit<T> (PhantomData<T>);
+struct Digit<T>(PhantomData<T>);
 
-impl<'i, T> Parser<'i, T> for Digit<T> where T: Copy + From<u8> {
+impl<'i, T> Parser<'i, T> for Digit<T>
+where
+    T: Copy + From<u8>,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if input.len() == 0 {
@@ -19,14 +22,20 @@ impl<'i, T> Parser<'i, T> for Digit<T> where T: Copy + From<u8> {
 }
 
 #[inline]
-pub fn digit<'i, T>() -> impl Parser<'i, T> where T: Copy + From<u8> {
+pub fn digit<'i, T>() -> impl Parser<'i, T>
+where
+    T: Copy + From<u8>,
+{
     Digit(PhantomData::default())
 }
 
 #[derive(Copy, Clone)]
-struct SignedInt<T> (PhantomData<T>);
+struct SignedInt<T>(PhantomData<T>);
 
-impl<'i, T> Parser<'i, T> for SignedInt<T> where T: Copy + From<u8> + MulAssign + AddAssign + Neg<Output=T> {
+impl<'i, T> Parser<'i, T> for SignedInt<T>
+where
+    T: Copy + From<u8> + MulAssign + AddAssign + Neg<Output = T>,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if input.len() == 0 {
@@ -78,7 +87,10 @@ impl<'i, T> Parser<'i, T> for SignedInt<T> where T: Copy + From<u8> + MulAssign 
                 input = &input[1..];
             }
 
-            let len = input.iter().take_while(|v| **v >= b'0' && **v <= b'9').count();
+            let len = input
+                .iter()
+                .take_while(|v| **v >= b'0' && **v <= b'9')
+                .count();
 
             if len > 0 {
                 ParseResult::Good((), &input[len..])
@@ -92,14 +104,20 @@ impl<'i, T> Parser<'i, T> for SignedInt<T> where T: Copy + From<u8> + MulAssign 
 }
 
 #[inline]
-pub fn signed_int<'i, T>() -> impl Parser<'i, T> where T: Copy + From<u8> + MulAssign + AddAssign + Neg<Output=T> {
+pub fn signed_int<'i, T>() -> impl Parser<'i, T>
+where
+    T: Copy + From<u8> + MulAssign + AddAssign + Neg<Output = T>,
+{
     SignedInt(PhantomData::default())
 }
 
 #[derive(Copy, Clone)]
-struct UnsignedInt<T> (PhantomData<T>);
+struct UnsignedInt<T>(PhantomData<T>);
 
-impl<'i, T> Parser<'i, T> for UnsignedInt<T> where T: Copy + From<u8> + MulAssign + AddAssign {
+impl<'i, T> Parser<'i, T> for UnsignedInt<T>
+where
+    T: Copy + From<u8> + MulAssign + AddAssign,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
         if input.len() == 0 {
@@ -133,7 +151,10 @@ impl<'i, T> Parser<'i, T> for UnsignedInt<T> where T: Copy + From<u8> + MulAssig
     #[inline]
     fn can_parse(&self, input: &'i [u8]) -> ParseResult<'i, ()> {
         if input.len() == 0 {
-            let len = input.iter().take_while(|v| **v >= b'0' && **v <= b'9').count();
+            let len = input
+                .iter()
+                .take_while(|v| **v >= b'0' && **v <= b'9')
+                .count();
             if len > 0 {
                 ParseResult::Good((), &input[len..])
             } else {
@@ -146,7 +167,10 @@ impl<'i, T> Parser<'i, T> for UnsignedInt<T> where T: Copy + From<u8> + MulAssig
 }
 
 #[inline]
-pub fn unsigned_int<'i, T>() -> impl Parser<'i, T> where T: Copy + From<u8> + MulAssign + AddAssign {
+pub fn unsigned_int<'i, T>() -> impl Parser<'i, T>
+where
+    T: Copy + From<u8> + MulAssign + AddAssign,
+{
     UnsignedInt(PhantomData::default())
 }
 

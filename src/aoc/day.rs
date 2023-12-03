@@ -1,8 +1,8 @@
-use std::fmt::Display;
-use time::Instant;
 use crate::aoc::utils::format_duration;
 use crate::ds::Graph;
-use crate::search::{Search, dfs};
+use crate::search::{dfs, Search};
+use std::fmt::Display;
+use time::Instant;
 
 pub struct Day {
     graph: Graph<&'static str, (String, i64), (), 16>,
@@ -45,12 +45,16 @@ impl Day {
 
         print!("{: >10} |", format_duration(total));
         for (step_label, step_time) in steps.iter() {
-            let abbr = step_label.split(' ')
+            let abbr = step_label
+                .split(' ')
                 .map(|w| w.chars().next().unwrap().to_ascii_lowercase())
                 .filter(|c| *c != '(')
                 .collect::<String>();
 
-            print!("{: >16}", format!("{}={}", abbr, format_duration(*step_time)));
+            print!(
+                "{: >16}",
+                format!("{}={}", abbr, format_duration(*step_time))
+            );
         }
 
         println!();
@@ -132,10 +136,17 @@ impl Day {
             }
         });
 
-        results.into_iter().min_by_key(|(_, total)| *total).unwrap().clone()
+        results
+            .into_iter()
+            .min_by_key(|(_, total)| *total)
+            .unwrap()
+            .clone()
     }
 
-    pub fn note<T>(&mut self, label: &'static str, value: T) where T: Display {
+    pub fn note<T>(&mut self, label: &'static str, value: T)
+    where
+        T: Display,
+    {
         self.notes.push((label, value.to_string()))
     }
 
@@ -144,7 +155,11 @@ impl Day {
         self.tail = Some(0);
     }
 
-    pub fn part<F, T>(&mut self, label: &'static str, f: F) -> T where F: Fn() -> T, T: Display {
+    pub fn part<F, T>(&mut self, label: &'static str, f: F) -> T
+    where
+        F: Fn() -> T,
+        T: Display,
+    {
         let (res, dur) = self.run(f);
 
         let new_tail = self.graph.create_node(label, (res.to_string(), dur));
@@ -157,10 +172,15 @@ impl Day {
         res
     }
 
-    pub fn prep<F, T>(&mut self, label: &'static str, f: F) -> T where F: Fn() -> T {
+    pub fn prep<F, T>(&mut self, label: &'static str, f: F) -> T
+    where
+        F: Fn() -> T,
+    {
         let (res, dur) = self.run(f);
 
-        let new_tail = self.graph.create_node(label, (String::from("$$run_parse$$"), dur));
+        let new_tail = self
+            .graph
+            .create_node(label, (String::from("$$run_parse$$"), dur));
         if let Some(tail) = self.tail {
             self.graph.connect(tail, new_tail, ());
         }
@@ -170,7 +190,10 @@ impl Day {
         res
     }
 
-    fn run<F, T>(&mut self, f: F) -> (T, i64) where F: Fn() -> T {
+    fn run<F, T>(&mut self, f: F) -> (T, i64)
+    where
+        F: Fn() -> T,
+    {
         let before = Instant::now();
         let mut res = f();
         let after = Instant::now();
@@ -185,13 +208,15 @@ impl Day {
             50..=99 => 10,
             100..=299 => 4,
             300..=499 => 2,
-            _ => 1
+            _ => 1,
         };
         let mut dur = dur.whole_nanoseconds() as i64;
 
         if runs > 0 && !self.run_once {
             let before = Instant::now();
-            for _ in 0..runs { res = f(); }
+            for _ in 0..runs {
+                res = f();
+            }
             let after = Instant::now();
 
             dur = ((after - before).whole_nanoseconds() as i64) / (runs as i64);

@@ -1,4 +1,4 @@
-use crate::wfc::{Board, Rule, selector};
+use crate::wfc::{selector, Board, Rule};
 
 pub fn select_first_lowest<B: Board>() -> impl Rule<B> {
     selector(|b: &B| {

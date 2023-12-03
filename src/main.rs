@@ -1,6 +1,6 @@
+use common::aoc::AOC;
 use std::thread::sleep;
 use std::time::Duration;
-use common::aoc::AOC;
 
 fn main() {
     let aoc = AOC::new(2022);

@@ -1,7 +1,7 @@
-use std::fs::{create_dir_all, File, OpenOptions};
-use std::io::{Read, Write};
 use chrono::Datelike;
 pub use day::Day;
+use std::fs::{create_dir_all, File, OpenOptions};
+use std::io::{Read, Write};
 pub use utils::BothParts;
 
 mod day;
@@ -16,7 +16,10 @@ pub struct AOC {
 }
 
 impl AOC {
-    pub fn run_day<F>(&self, day_number: u32, cb: F) where F: Fn(&mut Day, &[u8]) -> () {
+    pub fn run_day<F>(&self, day_number: u32, cb: F)
+    where
+        F: Fn(&mut Day, &[u8]) -> (),
+    {
         if self.day != 0 && self.day != day_number {
             return;
         }
@@ -37,17 +40,30 @@ impl AOC {
 
                 create_dir_all(format!("./input/{}", self.year)).expect("Could not create dir");
                 let data = reqwest::blocking::Client::builder()
-                    .build().unwrap()
-                    .get(format!("https://adventofcode.com/{}/day/{}/input", self.year, day_number))
-                    .header("User-Agent", "AOC Runner (github.com/gissleh/aoc2023, by dev@gisle.me)")
+                    .build()
+                    .unwrap()
+                    .get(format!(
+                        "https://adventofcode.com/{}/day/{}/input",
+                        self.year, day_number
+                    ))
+                    .header(
+                        "User-Agent",
+                        "AOC Runner (github.com/gissleh/aoc2023, by dev@gisle.me)",
+                    )
                     .header("Authority", "adventofcode.com")
                     .header("Cookie", format!("session={}", token))
-                    .send().expect("failed to send request")
-                    .bytes().expect("could not read file");
+                    .send()
+                    .expect("failed to send request")
+                    .bytes()
+                    .expect("could not read file");
 
                 buf.extend(data.iter());
 
-                let mut file = OpenOptions::new().write(true).create(true).open(file_name).expect("Could not open file");
+                let mut file = OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(file_name)
+                    .expect("Could not open file");
                 file.write_all(&buf).expect("Could not write file");
             }
         }
@@ -64,7 +80,8 @@ impl AOC {
 
     pub fn new(year: u32) -> AOC {
         let args: Vec<String> = std::env::args().collect();
-        let day = args.get(1)
+        let day = args
+            .get(1)
             .map(|v| v.parse::<u32>().unwrap())
             .or(Some(chrono::Local::now().day()))
             .unwrap();
@@ -80,4 +97,3 @@ impl AOC {
         }
     }
 }
-

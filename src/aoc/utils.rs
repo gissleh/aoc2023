@@ -2,7 +2,11 @@ use std::fmt::{Display, Formatter};
 
 pub struct BothParts<T, U>(pub T, pub U);
 
-impl<T, U> Display for BothParts<T, U> where T: Display, U: Display {
+impl<T, U> Display for BothParts<T, U>
+where
+    T: Display,
+    U: Display,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}, {}", self.0, self.1)
     }

@@ -1,5 +1,5 @@
-use arrayvec::ArrayVec;
 use crate::utils::gather_target::GatherTarget;
+use arrayvec::ArrayVec;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Graph<K, V, E, const CAP: usize = 16> {
@@ -15,7 +15,7 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> {
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            nodes: Vec::with_capacity(capacity)
+            nodes: Vec::with_capacity(capacity),
         }
     }
 
@@ -31,18 +31,24 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> {
 
     #[inline(always)]
     pub fn node_mut(&mut self, index: usize) -> Option<(&mut K, &mut V)> {
-        self.nodes.get_mut(index).map(|n| (&mut n.key, &mut n.value))
+        self.nodes
+            .get_mut(index)
+            .map(|n| (&mut n.key, &mut n.value))
     }
 
     #[inline(always)]
-    pub fn nodes(&self) -> impl Iterator<Item=(usize, &K, &V)> {
-        self.nodes.iter()
+    pub fn nodes(&self) -> impl Iterator<Item = (usize, &K, &V)> {
+        self.nodes
+            .iter()
             .enumerate()
             .map(|(i, n)| (i, &n.key, &n.value))
     }
 
     #[inline(always)]
-    pub fn find_by<F>(&self, pred: F) -> Option<usize> where F: Fn(&K) -> bool {
+    pub fn find_by<F>(&self, pred: F) -> Option<usize>
+    where
+        F: Fn(&K) -> bool,
+    {
         self.nodes.iter().position(|n| pred(&n.key))
     }
 
@@ -51,18 +57,22 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> {
     #[inline]
     pub fn create_node(&mut self, key: K, value: V) -> usize {
         let index = self.nodes.len();
-        self.nodes.push(Node { key, value, edges: ArrayVec::new() });
+        self.nodes.push(Node {
+            key,
+            value,
+            edges: ArrayVec::new(),
+        });
 
         index
     }
 
     /// Iterate over all edges on a node, returning
     #[inline]
-    pub fn edges_from(&self, index: usize) -> impl Iterator<Item=(&E, &usize, &K)> {
-        self.nodes[index].edges.iter()
-            .map(|(target_idx, edge)| (
-                edge, target_idx, &self.nodes[*target_idx].key
-            ))
+    pub fn edges_from(&self, index: usize) -> impl Iterator<Item = (&E, &usize, &K)> {
+        self.nodes[index]
+            .edges
+            .iter()
+            .map(|(target_idx, edge)| (edge, target_idx, &self.nodes[*target_idx].key))
     }
 
     #[inline]
@@ -71,7 +81,10 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> {
     }
 }
 
-impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> where E: Clone {
+impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP>
+where
+    E: Clone,
+{
     #[inline]
     pub fn connect_mutual(&mut self, src: usize, dst: usize, edge: E) {
         self.nodes[src].edges.push((dst, edge.clone()));
@@ -79,8 +92,10 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> where E: Clone {
     }
 }
 
-
-impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> where K: Eq {
+impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP>
+where
+    K: Eq,
+{
     /// Ensures that a node exists. This is different from find_or_create
     /// in that it sets the value if it finds it, and does not need a default
     /// value on the type.
@@ -101,7 +116,11 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> where K: Eq {
     }
 }
 
-impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> where K: Eq, V: Default {
+impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP>
+where
+    K: Eq,
+    V: Default,
+{
     #[inline]
     pub fn find_or_create(&mut self, key: K) -> usize {
         match self.find(&key) {
@@ -111,10 +130,17 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> where K: Eq, V: Default {
     }
 }
 
-impl<K, V, E, const CAP: usize> GatherTarget<GraphInstruction<K, V, E, CAP>> for Graph<K, V, E, CAP> where K: Eq, V: Default, E: Clone {
+impl<K, V, E, const CAP: usize> GatherTarget<GraphInstruction<K, V, E, CAP>> for Graph<K, V, E, CAP>
+where
+    K: Eq,
+    V: Default,
+    E: Clone,
+{
     #[inline]
     fn start_gathering(size_hint: usize) -> Self {
-        Self { nodes: Vec::with_capacity(size_hint) }
+        Self {
+            nodes: Vec::with_capacity(size_hint),
+        }
     }
 
     #[inline]
@@ -162,23 +188,26 @@ struct Node<K, V, E, const CAP: usize> {
 
 #[cfg(test)]
 mod tests {
-    use test::Bencher;
-    use crate::parse::{any_byte, bytes_until, n_bytes, Parser, signed_int, unsigned_int};
     use super::*;
+    use crate::parse::{any_byte, bytes_until, n_bytes, signed_int, unsigned_int, Parser};
+    use test::Bencher;
 
     const EXAMPLE_01: &[u8] = include_bytes!("./test_fixtures/graph_01.txt");
     const EXAMPLE_2022_DAY16: &[u8] = include_bytes!("./test_fixtures/2022_d16_example.txt");
     const EXAMPLE_2015_DAY09: &[u8] = include_bytes!("./test_fixtures/2015_d09_example.txt");
 
     fn parse_2022_d16_example() -> Graph<[u8; 2], i32, u8, 4> {
-        b"Valve ".and_instead(n_bytes::<2>())
+        b"Valve "
+            .and_instead(n_bytes::<2>())
             .and_discard(b" has flow rate=")
             .and(signed_int::<i32>())
             .and_discard(b"; tunnel".and(b" leads to valve ".or(b"s lead to valves ")))
-            .and(n_bytes::<2>()
-                .map(|name| (name, 1))
-                .delimited_by(b", ")
-                .repeat::<ArrayVec<_, 4>>())
+            .and(
+                n_bytes::<2>()
+                    .map(|name| (name, 1))
+                    .delimited_by(b", ")
+                    .repeat::<ArrayVec<_, 4>>(),
+            )
             .map(|((name, flow_rate), tunnels_to)| {
                 GraphInstruction::NodeAndEdges(name, flow_rate, tunnels_to)
             })
@@ -193,20 +222,63 @@ mod tests {
         let graph = parse_2022_d16_example();
 
         assert_eq!(graph.nodes.len(), 10);
-        assert_eq!(graph, Graph {
-            nodes: vec![
-                Node { key: *b"AA", value: 0, edges: ArrayVec::try_from([(1, 1), (2, 1), (3, 1)].as_slice()).unwrap() },
-                Node { key: *b"DD", value: 20, edges: ArrayVec::try_from([(4, 1), (0, 1), (5, 1)].as_slice()).unwrap() },
-                Node { key: *b"II", value: 0, edges: ArrayVec::try_from([(0, 1), (9, 1)].as_slice()).unwrap() },
-                Node { key: *b"BB", value: 13, edges: ArrayVec::try_from([(4, 1), (0, 1)].as_slice()).unwrap() },
-                Node { key: *b"CC", value: 2, edges: ArrayVec::try_from([(1, 1), (3, 1)].as_slice()).unwrap() },
-                Node { key: *b"EE", value: 3, edges: ArrayVec::try_from([(6, 1), (1, 1)].as_slice()).unwrap() },
-                Node { key: *b"FF", value: 0, edges: ArrayVec::try_from([(5, 1), (7, 1)].as_slice()).unwrap() },
-                Node { key: *b"GG", value: 0, edges: ArrayVec::try_from([(6, 1), (8, 1)].as_slice()).unwrap() },
-                Node { key: *b"HH", value: 22, edges: ArrayVec::try_from([(7, 1)].as_slice()).unwrap() },
-                Node { key: *b"JJ", value: 21, edges: ArrayVec::try_from([(2, 1)].as_slice()).unwrap() },
-            ]
-        });
+        assert_eq!(
+            graph,
+            Graph {
+                nodes: vec![
+                    Node {
+                        key: *b"AA",
+                        value: 0,
+                        edges: ArrayVec::try_from([(1, 1), (2, 1), (3, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"DD",
+                        value: 20,
+                        edges: ArrayVec::try_from([(4, 1), (0, 1), (5, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"II",
+                        value: 0,
+                        edges: ArrayVec::try_from([(0, 1), (9, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"BB",
+                        value: 13,
+                        edges: ArrayVec::try_from([(4, 1), (0, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"CC",
+                        value: 2,
+                        edges: ArrayVec::try_from([(1, 1), (3, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"EE",
+                        value: 3,
+                        edges: ArrayVec::try_from([(6, 1), (1, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"FF",
+                        value: 0,
+                        edges: ArrayVec::try_from([(5, 1), (7, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"GG",
+                        value: 0,
+                        edges: ArrayVec::try_from([(6, 1), (8, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"HH",
+                        value: 22,
+                        edges: ArrayVec::try_from([(7, 1)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: *b"JJ",
+                        value: 21,
+                        edges: ArrayVec::try_from([(2, 1)].as_slice()).unwrap()
+                    },
+                ]
+            }
+        );
     }
 
     #[test]
@@ -218,15 +290,32 @@ mod tests {
             .and(unsigned_int::<u32>())
             .and_discard(b'\n')
             .map(|((src, dst), dist)| GraphInstruction::MutualEdge(src, dist, dst))
-            .repeat().parse(EXAMPLE_2015_DAY09).unwrap();
+            .repeat()
+            .parse(EXAMPLE_2015_DAY09)
+            .unwrap();
 
-        assert_eq!(graph, Graph {
-            nodes: vec![
-                Node { key: b"London".as_slice(), value: (), edges: ArrayVec::try_from([(1, 464), (2, 518)].as_slice()).unwrap() },
-                Node { key: b"Dublin".as_slice(), value: (), edges: ArrayVec::try_from([(0, 464), (2, 141)].as_slice()).unwrap() },
-                Node { key: b"Belfast".as_slice(), value: (), edges: ArrayVec::try_from([(0, 518), (1, 141)].as_slice()).unwrap() },
-            ]
-        })
+        assert_eq!(
+            graph,
+            Graph {
+                nodes: vec![
+                    Node {
+                        key: b"London".as_slice(),
+                        value: (),
+                        edges: ArrayVec::try_from([(1, 464), (2, 518)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: b"Dublin".as_slice(),
+                        value: (),
+                        edges: ArrayVec::try_from([(0, 464), (2, 141)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: b"Belfast".as_slice(),
+                        value: (),
+                        edges: ArrayVec::try_from([(0, 518), (1, 141)].as_slice()).unwrap()
+                    },
+                ]
+            }
+        )
     }
 
     #[bench]
@@ -237,10 +326,11 @@ mod tests {
     #[test]
     fn gather_target_can_parse() {
         let graph: Graph<char, u32, u32, 4> = b"node "
-            .and_instead(any_byte()
-                .and_discard(b' ')
-                .and(unsigned_int::<u32>())
-                .map(|(k, v)| GraphInstruction::Node(k as char, v))
+            .and_instead(
+                any_byte()
+                    .and_discard(b' ')
+                    .and(unsigned_int::<u32>())
+                    .map(|(k, v)| GraphInstruction::Node(k as char, v)),
             )
             .or(b"edge "
                 .and_instead(any_byte())
@@ -248,29 +338,65 @@ mod tests {
                 .and(any_byte())
                 .and_discard(b' ')
                 .and(unsigned_int::<u32>())
-                .map(|(((src, c), dst), cost)| if c == b'=' {
-                    GraphInstruction::MutualEdge(src as char, cost, dst as char)
-                } else {
-                    GraphInstruction::Edge(src as char, cost, dst as char)
-                })
-            )
+                .map(|(((src, c), dst), cost)| {
+                    if c == b'=' {
+                        GraphInstruction::MutualEdge(src as char, cost, dst as char)
+                    } else {
+                        GraphInstruction::Edge(src as char, cost, dst as char)
+                    }
+                }))
             .delimited_by(b'\n')
             .repeat()
             .parse(EXAMPLE_01)
             .unwrap();
 
-        assert_eq!(graph, Graph {
-            nodes: vec![
-                Node { key: 'A', value: 5000, edges: ArrayVec::try_from([(1, 32), (2, 7), (5, 119)].as_slice()).unwrap() },
-                Node { key: 'Z', value: 7600, edges: ArrayVec::try_from([(5, 2)].as_slice()).unwrap() },
-                Node { key: 'B', value: 0, edges: ArrayVec::try_from([(0, 7), (1, 6)].as_slice()).unwrap() },
-                Node { key: 'C', value: 0, edges: ArrayVec::try_from([(3, 2), (1, 170)].as_slice()).unwrap() },
-                Node { key: 'D', value: 9000, edges: ArrayVec::try_from([(1, 9), (5, 11)].as_slice()).unwrap() },
-                Node { key: 'E', value: 0, edges: ArrayVec::try_from([(4, 11), (0, 119), (1, 2)].as_slice()).unwrap() },
-                Node { key: 'F', value: 4000, edges: ArrayVec::try_from([].as_slice()).unwrap() },
-                Node { key: 'G', value: 12000, edges: ArrayVec::try_from([].as_slice()).unwrap() },
-            ],
-        });
+        assert_eq!(
+            graph,
+            Graph {
+                nodes: vec![
+                    Node {
+                        key: 'A',
+                        value: 5000,
+                        edges: ArrayVec::try_from([(1, 32), (2, 7), (5, 119)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: 'Z',
+                        value: 7600,
+                        edges: ArrayVec::try_from([(5, 2)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: 'B',
+                        value: 0,
+                        edges: ArrayVec::try_from([(0, 7), (1, 6)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: 'C',
+                        value: 0,
+                        edges: ArrayVec::try_from([(3, 2), (1, 170)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: 'D',
+                        value: 9000,
+                        edges: ArrayVec::try_from([(1, 9), (5, 11)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: 'E',
+                        value: 0,
+                        edges: ArrayVec::try_from([(4, 11), (0, 119), (1, 2)].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: 'F',
+                        value: 4000,
+                        edges: ArrayVec::try_from([].as_slice()).unwrap()
+                    },
+                    Node {
+                        key: 'G',
+                        value: 12000,
+                        edges: ArrayVec::try_from([].as_slice()).unwrap()
+                    },
+                ],
+            }
+        );
     }
 
     #[test]

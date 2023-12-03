@@ -12,16 +12,18 @@ pub fn main(day: &mut Day, input: &[u8]) {
 
 fn p1(list: &[&[u8]]) -> u32 {
     list.iter()
-        .map(|l| l.iter()
-            .filter(|c| **c > b'0' && **c <= b'9')
-            .fold([0, 0], |v, c| {
-                let c = (c - b'0') as u32;
-                if v[0] == 0 {
-                    [c * 10, c]
-                } else {
-                    [v[0], c]
-                }
-            }))
+        .map(|l| {
+            l.iter()
+                .filter(|c| **c > b'0' && **c <= b'9')
+                .fold([0, 0], |v, c| {
+                    let c = (c - b'0') as u32;
+                    if v[0] == 0 {
+                        [c * 10, c]
+                    } else {
+                        [v[0], c]
+                    }
+                })
+        })
         .map(|a| a[0] + a[1])
         .sum()
 }
@@ -44,10 +46,10 @@ fn p2(list: &[&[u8]]) -> u32 {
     let num_parser = num_parser();
 
     list.iter()
-        .map(|l|
-            num_parser.first_parsable_in(l).unwrap().0 * 10 +
-            num_parser.last_parsable_in(l).unwrap().0
-        )
+        .map(|l| {
+            num_parser.first_parsable_in(l).unwrap().0 * 10
+                + num_parser.last_parsable_in(l).unwrap().0
+        })
         .sum()
 }
 
@@ -69,7 +71,7 @@ a1b2c3d4e5f
 treb7uchet
 ";
 
-    const P2_EXAMPLE: &[u8]= b"two1nine
+    const P2_EXAMPLE: &[u8] = b"two1nine
 eightwothree
 abcone2threexyz
 xtwone3four
@@ -78,10 +80,9 @@ zoneight234
 7pqrstsixteen
 ";
 
-    const P2_REDDIT_EXAMPLE: &[u8]= b"eighthree
+    const P2_REDDIT_EXAMPLE: &[u8] = b"eighthree
 sevenine
 ";
-
 
     #[test]
     fn p1_testcase() {
@@ -104,6 +105,6 @@ sevenine
     #[test]
     fn p2_reddit_testcase() {
         let parsed = parse_list(P2_REDDIT_EXAMPLE);
-        assert_eq!(p2(&parsed), 83+79)
+        assert_eq!(p2(&parsed), 83 + 79)
     }
 }

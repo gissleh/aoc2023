@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
-use crate::parse::{Parser, ParseResult};
+use crate::parse::{ParseResult, Parser};
 use crate::utils::gather_target::GatherTarget;
+use std::marker::PhantomData;
 
 pub struct Repeat<P, T, G> {
     parser: P,
@@ -10,13 +10,20 @@ pub struct Repeat<P, T, G> {
 
 impl<P, T, G> Repeat<P, T, G> {
     pub(crate) fn new(parser: P, amount: usize) -> Self {
-        Self { parser, amount, spooky_ghost: PhantomData::default() }
+        Self {
+            parser,
+            amount,
+            spooky_ghost: PhantomData::default(),
+        }
     }
 }
 
 impl<P, T, G> Copy for Repeat<P, T, G> where P: Copy {}
 
-impl<P, T, G> Clone for Repeat<P, T, G> where P: Clone {
+impl<P, T, G> Clone for Repeat<P, T, G>
+where
+    P: Clone,
+{
     fn clone(&self) -> Self {
         Self {
             parser: self.parser.clone(),
@@ -26,7 +33,11 @@ impl<P, T, G> Clone for Repeat<P, T, G> where P: Clone {
     }
 }
 
-impl<'i, P, T, G> Parser<'i, G> for Repeat<P, T, G> where P: Parser<'i, T>, G: GatherTarget<T> {
+impl<'i, P, T, G> Parser<'i, G> for Repeat<P, T, G>
+where
+    P: Parser<'i, T>,
+    G: GatherTarget<T>,
+{
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, G> {
         let mut target = G::start_gathering(self.amount);
 
@@ -37,12 +48,16 @@ impl<'i, P, T, G> Parser<'i, G> for Repeat<P, T, G> where P: Parser<'i, T>, G: G
                 }
 
                 let mut index = 1;
-                while let ParseResult::Good(full, new_input) = self.parser.parse_into(current_input, &mut target, index) {
+                while let ParseResult::Good(full, new_input) =
+                    self.parser.parse_into(current_input, &mut target, index)
+                {
                     current_input = new_input;
                     index += 1;
                     if full {
                         if self.amount != 0 && index != self.amount {
-                            return ParseResult::new_bad("Container was full before amount was met.");
+                            return ParseResult::new_bad(
+                                "Container was full before amount was met.",
+                            );
                         }
 
                         break;
@@ -53,7 +68,7 @@ impl<'i, P, T, G> Parser<'i, G> for Repeat<P, T, G> where P: Parser<'i, T>, G: G
 
                 ParseResult::Good(target, current_input)
             }
-            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in Repeat")
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in Repeat"),
         }
     }
 }
@@ -66,13 +81,26 @@ pub struct DelimitedBy<PB, PD, TB, TD> {
 
 impl<PB, PD, TB, TD> DelimitedBy<PB, PD, TB, TD> {
     pub(crate) fn new(parser_body: PB, parser_delim: PD) -> Self {
-        Self { parser_body, parser_delim, spooky_ghost: PhantomData::default() }
+        Self {
+            parser_body,
+            parser_delim,
+            spooky_ghost: PhantomData::default(),
+        }
     }
 }
 
-impl<PB, PD, TB, TD> Copy for DelimitedBy<PB, PD, TB, TD> where PB: Copy, PD: Copy {}
+impl<PB, PD, TB, TD> Copy for DelimitedBy<PB, PD, TB, TD>
+where
+    PB: Copy,
+    PD: Copy,
+{
+}
 
-impl<PB, PD, TB, TD> Clone for DelimitedBy<PB, PD, TB, TD> where PB: Clone, PD: Clone {
+impl<PB, PD, TB, TD> Clone for DelimitedBy<PB, PD, TB, TD>
+where
+    PB: Clone,
+    PD: Clone,
+{
     fn clone(&self) -> Self {
         Self {
             parser_body: self.parser_body.clone(),
@@ -82,7 +110,11 @@ impl<PB, PD, TB, TD> Clone for DelimitedBy<PB, PD, TB, TD> where PB: Clone, PD: 
     }
 }
 
-impl<'i, PB, PD, TB, TD> Parser<'i, TB> for DelimitedBy<PB, PD, TB, TD> where PB: Parser<'i, TB>, PD: Parser<'i, TD> {
+impl<'i, PB, PD, TB, TD> Parser<'i, TB> for DelimitedBy<PB, PD, TB, TD>
+where
+    PB: Parser<'i, TB>,
+    PD: Parser<'i, TD>,
+{
     #[inline]
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TB> {
         self.parser_body.parse(input)
@@ -93,11 +125,13 @@ impl<'i, PB, PD, TB, TD> Parser<'i, TB> for DelimitedBy<PB, PD, TB, TD> where PB
             match self.parser_delim.parse(input) {
                 ParseResult::Good(_, new_input) => {
                     match self.parser_body.parse_at_index(new_input, index) {
-                        ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse body after delimiter"),
+                        ParseResult::Bad(err) => {
+                            ParseResult::wrap_bad(err, "Failed to parse body after delimiter")
+                        }
                         good_res => good_res,
                     }
                 }
-                ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Delimiter not found")
+                ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Delimiter not found"),
             }
         } else {
             self.parser_body.parse_at_index(input, 0)
@@ -110,33 +144,50 @@ pub struct Count<P, T> {
     spooky_ghost: PhantomData<T>,
 }
 
-impl<'i, P, T> Count<P, T> where P: Parser<'i, T> {
+impl<'i, P, T> Count<P, T>
+where
+    P: Parser<'i, T>,
+{
     pub fn new(parser: P) -> Self {
-        Self { parser, spooky_ghost: Default::default() }
+        Self {
+            parser,
+            spooky_ghost: Default::default(),
+        }
     }
 }
 
 impl<P, T> Copy for Count<P, T> where P: Copy {}
 
-impl<P, T> Clone for Count<P, T> where P: Clone {
+impl<P, T> Clone for Count<P, T>
+where
+    P: Clone,
+{
     fn clone(&self) -> Self {
-        Self { parser: self.parser.clone(), spooky_ghost: Default::default() }
+        Self {
+            parser: self.parser.clone(),
+            spooky_ghost: Default::default(),
+        }
     }
 }
 
-impl<'i, P, T> Parser<'i, usize> for Count<P, T> where P: Parser<'i, T> {
+impl<'i, P, T> Parser<'i, usize> for Count<P, T>
+where
+    P: Parser<'i, T>,
+{
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, usize> {
         match self.parser.parse_at_index(input, 0) {
             ParseResult::Good(_, mut current_input) => {
                 let mut count = 1;
-                while let ParseResult::Good(_, new_input) = self.parser.parse_at_index(current_input, count) {
+                while let ParseResult::Good(_, new_input) =
+                    self.parser.parse_at_index(current_input, count)
+                {
                     current_input = new_input;
                     count += 1;
                 }
 
                 ParseResult::Good(count, current_input)
             }
-            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in Count")
+            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in Count"),
         }
     }
 }
@@ -149,16 +200,34 @@ pub struct RepeatFold<P, FI, FS, TP, TA> {
 }
 
 impl<P, FI, FS, TP, TA> RepeatFold<P, FI, FS, TP, TA>
-    where FI: Fn() -> TA + Copy,
-          FS: Fn(TA, TP) -> TA + Copy {
+where
+    FI: Fn() -> TA + Copy,
+    FS: Fn(TA, TP) -> TA + Copy,
+{
     pub fn new(parser: P, init_func: FI, step_func: FS) -> Self {
-        Self{parser, init_func, step_func, spooky_ghost: Default::default()}
+        Self {
+            parser,
+            init_func,
+            step_func,
+            spooky_ghost: Default::default(),
+        }
     }
 }
 
-impl<P, FI, FS, TP, TA> Copy for RepeatFold<P, FI, FS, TP, TA> where P: Copy, FI: Copy, FS: Copy {}
+impl<P, FI, FS, TP, TA> Copy for RepeatFold<P, FI, FS, TP, TA>
+where
+    P: Copy,
+    FI: Copy,
+    FS: Copy,
+{
+}
 
-impl<P, FI, FS, TP, TA> Clone for RepeatFold<P, FI, FS, TP, TA> where P: Clone, FI: Clone, FS: Clone {
+impl<P, FI, FS, TP, TA> Clone for RepeatFold<P, FI, FS, TP, TA>
+where
+    P: Clone,
+    FI: Clone,
+    FS: Clone,
+{
     fn clone(&self) -> Self {
         Self {
             parser: self.parser.clone(),
@@ -170,9 +239,11 @@ impl<P, FI, FS, TP, TA> Clone for RepeatFold<P, FI, FS, TP, TA> where P: Clone, 
 }
 
 impl<'i, P, FI, FS, TP, TA> Parser<'i, TA> for RepeatFold<P, FI, FS, TP, TA>
-    where P: Copy + Parser<'i, TP>,
-          FI: Fn() -> TA + Copy,
-          FS: Fn(TA, TP) -> TA + Copy {
+where
+    P: Copy + Parser<'i, TP>,
+    FI: Fn() -> TA + Copy,
+    FS: Fn(TA, TP) -> TA + Copy,
+{
     fn parse(&self, input: &'i [u8]) -> ParseResult<'i, TA> {
         let mut acc = (self.init_func)();
 
@@ -181,7 +252,9 @@ impl<'i, P, FI, FS, TP, TA> Parser<'i, TA> for RepeatFold<P, FI, FS, TP, TA>
                 let mut index = 1;
 
                 acc = (self.step_func)(acc, res);
-                while let ParseResult::Good(res, new_input) = self.parser.parse_at_index(current_input, index) {
+                while let ParseResult::Good(res, new_input) =
+                    self.parser.parse_at_index(current_input, index)
+                {
                     acc = (self.step_func)(acc, res);
                     current_input = new_input;
                     index += 1;
@@ -189,16 +262,18 @@ impl<'i, P, FI, FS, TP, TA> Parser<'i, TA> for RepeatFold<P, FI, FS, TP, TA>
 
                 ParseResult::Good(acc, current_input)
             }
-            ParseResult::Bad(err) => ParseResult::wrap_bad(err, "Failed to parse first in RepeatFold")
+            ParseResult::Bad(err) => {
+                ParseResult::wrap_bad(err, "Failed to parse first in RepeatFold")
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use arrayvec::ArrayVec;
-    use crate::parse::unsigned_int;
     use super::*;
+    use crate::parse::unsigned_int;
+    use arrayvec::ArrayVec;
 
     #[test]
     fn repeat_repeats() {
@@ -219,7 +294,10 @@ mod tests {
             ParseResult::Good(([b'a', b'a', b'a', b'a', b'a', b'a', 0, 0], 6usize), b"bcd"),
         );
         assert_eq!(
-            unsigned_int::<u32>().then_skip(b',').repeat::<(_, _, _)>().parse(b"473,1123,5932,9684"),
+            unsigned_int::<u32>()
+                .then_skip(b',')
+                .repeat::<(_, _, _)>()
+                .parse(b"473,1123,5932,9684"),
             ParseResult::Good((473, 1123, 5932), b"9684"),
         );
     }
@@ -228,7 +306,10 @@ mod tests {
     fn repeat_repeats_with_delimiter() {
         assert_eq!(
             // This was ugly, but now it's easier to define a parameter here.
-            unsigned_int::<u32>().delimited_by(b',').repeat::<(_, _, _)>().parse(b"473,1123,5932"),
+            unsigned_int::<u32>()
+                .delimited_by(b',')
+                .repeat::<(_, _, _)>()
+                .parse(b"473,1123,5932"),
             ParseResult::Good((473, 1123, 5932), b""),
         );
 
@@ -238,6 +319,9 @@ mod tests {
             .repeat()
             .parse(b"1,2,8,64,234,221");
 
-        assert_eq!(v, ParseResult::Good(([1, 2, 8, 64, 234, 221, 0, 0], 6), b""));
+        assert_eq!(
+            v,
+            ParseResult::Good(([1, 2, 8, 64, 234, 221, 0, 0], 6), b"")
+        );
     }
 }
