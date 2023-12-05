@@ -1,9 +1,12 @@
+#![feature(array_chunks)]
+
 use common::aoc::AOC;
 
 mod day01;
 mod day02;
 mod day03;
 mod day04;
+mod day05;
 
 fn main() {
     let aoc = AOC::new(2023);
@@ -12,4 +15,5 @@ fn main() {
     aoc.run_day(2, day02::main);
     aoc.run_day(3, day03::main);
     aoc.run_day(4, day04::main);
+    aoc.run_day(5, day05::main);
 }
