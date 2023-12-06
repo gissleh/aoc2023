@@ -1,3 +1,7 @@
+use std::cmp::Ordering;
+use std::fmt::Display;
+use std::ops::{AddAssign, SubAssign};
+use num::{Integer, One};
 use crate::utils::gather_target::GatherTarget;
 pub use bfs::bfs;
 pub use dfs::dfs;
@@ -77,6 +81,81 @@ pub trait Search<S>: Sized {
         gather_target
     }
 }
+
+pub fn binary_search<I, F>(start: I, initial_step: I, cb: F) -> Option<I>
+    where I: Integer + Copy + One, F: Fn(I) -> Ordering {
+    let two = I::one() + I::one();
+    let mut current = start;
+    let mut step = initial_step;
+    let mut ones_left = 32;
+
+    while ones_left > 0 {
+        match cb(current) {
+            Ordering::Equal => { return Some(current); }
+            Ordering::Less => { current = current.add(step); }
+            Ordering::Greater => {
+                current = current.sub(step);
+            }
+        }
+
+        if step > I::one() {
+            step = step.div(two);
+        } else {
+            ones_left -= 1;
+        }
+    }
+
+    None
+}
+
+pub fn find_first_number<I, F>(start: I, end: I, initial_step: I, step_divide: I, cb: F) -> Option<I>
+    where I: Display + Integer + Copy + One + AddAssign + SubAssign, F: Fn(I) -> bool {
+    let one = I::one();
+    let zero = I::zero();
+    let mut current = start;
+    let mut step = initial_step;
+    let mut ones_left = step_divide + one;
+    let mut never_found = true;
+
+    while ones_left > zero {
+        if current > end {
+            if never_found {
+                current = initial_step;
+            } else {
+                current -= step;
+            }
+
+            step = step / step_divide;
+            if step == zero {
+                step = one;
+            }
+        }
+
+        if cb(current) {
+            never_found = false;
+
+            if step == one {
+                return Some(current);
+            } else {
+                current -= step;
+                step = step / step_divide;
+                if step == zero {
+                    step = one;
+                }
+            }
+        } else {
+            if step == one {
+                ones_left -= one;
+            }
+
+            current += step;
+        }
+    }
+
+    None
+}
+
+
 
 #[cfg(test)]
 pub(crate) mod tests {
