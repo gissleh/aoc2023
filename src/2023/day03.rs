@@ -214,9 +214,9 @@ impl Schematic2 {
             let parts = &self.parts[lp1..lp2];
             let numbers = &self.numbers[ln1..ln2];
 
-            'part_loop: for PartNumber(nx, _, nw, nv) in numbers.iter() {
-                for PartName(px, _, _) in parts.iter() {
-                    if *px >= *nx - 1 && *px <= *nx + *nw + 1 {
+            'part_loop: for PartNumber(nx, nw, nv) in numbers.iter() {
+                for PartName(px, _) in parts.iter() {
+                    if *px >= *nx - 1 && *px <= *nx + *nw {
                         sum += nv;
                         continue 'part_loop;
                     }
@@ -239,14 +239,14 @@ impl Schematic2 {
             let parts = &self.parts[lp1..lp2];
             let numbers = &self.numbers[ln1..ln2];
 
-            'part_loop: for PartName(px, _, pn) in parts.iter() {
+            'part_loop: for PartName(px, pn) in parts.iter() {
                 if *pn != b'*' {
                     continue;
                 }
 
                 let mut left = 0u32;
                 let mut right = 0u32;
-                for PartNumber(nx, _, nw, nv) in numbers.iter() {
+                for PartNumber(nx, nw, nv) in numbers.iter() {
                     if *px >= *nx - 1 && *px <= *nx + *nw {
                         if left == 0 {
                             left = *nv;
@@ -282,7 +282,7 @@ impl Schematic2 {
             match *ch {
                 b'\n' => {
                     if dv > 0 {
-                        numbers.push(PartNumber(dx, y, x - dx, dv));
+                        numbers.push(PartNumber(dx, x - dx, dv));
                         dv = 0;
                     }
 
@@ -298,7 +298,7 @@ impl Schematic2 {
 
                 b'.' => {
                     if dv > 0 {
-                        numbers.push(PartNumber(dx, y, x - dx, dv));
+                        numbers.push(PartNumber(dx, x - dx, dv));
                         dv = 0;
                     }
 
@@ -319,11 +319,11 @@ impl Schematic2 {
 
                 _ => {
                     if dv > 0 {
-                        numbers.push(PartNumber(dx, y, x - dx, dv));
+                        numbers.push(PartNumber(dx, x - dx, dv));
                         dv = 0;
                     }
 
-                    parts.push(PartName(x, y, *ch));
+                    parts.push(PartName(x, *ch));
 
                     x += 1;
                 }
@@ -336,9 +336,9 @@ impl Schematic2 {
 }
 
 #[derive(Debug)]
-struct PartName (i16, i16, u8);
+struct PartName (i16, u8);
 #[derive(Debug)]
-struct PartNumber (i16, i16, i16, u32);
+struct PartNumber (i16, i16, u32);
 
 #[cfg(test)]
 mod tests {
