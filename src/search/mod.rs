@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::fmt::Display;
 use std::ops::{AddAssign, SubAssign};
 use num::{Integer, One};
 use crate::utils::gather_target::GatherTarget;
@@ -109,12 +108,12 @@ pub fn binary_search<I, F>(start: I, initial_step: I, cb: F) -> Option<I>
 }
 
 pub fn find_first_number<I, F>(start: I, end: I, initial_step: I, step_divide: I, cb: F) -> Option<I>
-    where I: Display + Integer + Copy + One + AddAssign + SubAssign, F: Fn(I) -> bool {
+    where I: Integer + Copy + One + AddAssign + SubAssign, F: Fn(I) -> bool {
     let one = I::one();
     let zero = I::zero();
     let mut current = start;
     let mut step = initial_step;
-    let mut ones_left = step_divide + one;
+    let mut ones_left = step_divide + step_divide;
     let mut never_found = true;
 
     while ones_left > zero {

@@ -35,12 +35,11 @@ impl Races {
         let time = self.times.iter().skip(1).fold(self.times[0], |c, n| add_digits(c, *n));
         let distance = self.distances.iter().skip(1).fold(self.distances[0], |c, n| add_digits(c, *n));
 
-        let initial_step = time / 2;
+        let initial_step = time / 8;
 
         let first = find_first_number(1, time, initial_step, 10, |hold_time| hold_time * (time - hold_time) > distance).unwrap();
-        let last = find_first_number(first, time, initial_step, 10, |hold_time| hold_time * (time - hold_time) <= distance).unwrap();
 
-        last - first
+        (time - (first * 2)) + 1
     }
 
     fn parser<'i>() -> impl Parser<'i, Self> {

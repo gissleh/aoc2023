@@ -9,9 +9,22 @@ pub fn main(day: &mut Day, input: &[u8]) {
     day.note("Width", schematic.map.width());
     day.note("Height", schematic.map.height());
     day.note("Numbers", schematic.next_index);
+    day.note("Parts", schematic.map.iter().filter(|(_, c)| if let Cell::Symbol(_) = c { true } else { false }).count());
 
     day.part("Part 1", || schematic.part_number_sum());
     day.part("Part 2", || schematic.gear_ratios_sum());
+
+    day.branch_from_root();
+
+    let schematic2 = day.prep("Parse (NG)", || Schematic2::parse(input));
+
+    day.note("Numbers (NG)", schematic2.numbers.len());
+    day.note("Parts (NG)", schematic2.parts.len());
+    day.note("Height (NG)", schematic2.height);
+
+    day.part("Part 1 (NG)", || schematic2.part_number_sum());
+    day.part("Part 2 (NG)", || schematic2.gear_ratio_sum());
+
 }
 
 struct Schematic {
@@ -181,7 +194,179 @@ enum Cell {
     Digit(u16, u16),
 }
 
+struct Schematic2 {
+    parts: Vec<PartName>,
+    numbers: Vec<PartNumber>,
+    lens: Vec<(usize, usize)>,
+    height: i16,
+}
+
+impl Schematic2 {
+    fn part_number_sum(&self) -> u32 {
+        let mut sum = 0;
+
+        for y in 1..=self.height as usize {
+            let lp1 = if y > 1 { self.lens[y - 2].0 } else { 0 };
+            let (_, ln1) = self.lens[y - 1];
+            let (_, ln2) = self.lens[y];
+            let (lp2, _) = self.lens[y + 1];
+
+            let parts = &self.parts[lp1..lp2];
+            let numbers = &self.numbers[ln1..ln2];
+
+            'part_loop: for PartNumber(nx, _, nw, nv) in numbers.iter() {
+                for PartName(px, _, _) in parts.iter() {
+                    if *px >= *nx - 1 && *px <= *nx + *nw + 1 {
+                        sum += nv;
+                        continue 'part_loop;
+                    }
+                }
+            }
+        }
+
+        sum
+    }
+
+    fn gear_ratio_sum(&self) -> u32 {
+        let mut sum = 0;
+
+        for y in 1..=self.height as usize {
+            let ln1 = if y > 1 { self.lens[y - 2].1 } else { 0 };
+            let (lp1, _) = self.lens[y - 1];
+            let (lp2, _) = self.lens[y];
+            let (_, ln2) = self.lens[y + 1];
+
+            let parts = &self.parts[lp1..lp2];
+            let numbers = &self.numbers[ln1..ln2];
+
+            'part_loop: for PartName(px, _, pn) in parts.iter() {
+                if *pn != b'*' {
+                    continue;
+                }
+
+                let mut left = 0u32;
+                let mut right = 0u32;
+                for PartNumber(nx, _, nw, nv) in numbers.iter() {
+                    if *px >= *nx - 1 && *px <= *nx + *nw {
+                        if left == 0 {
+                            left = *nv;
+                        } else if right == 0 {
+                            right = *nv;
+                        } else {
+                            continue 'part_loop;
+                        }
+                    }
+                }
+
+                if right != 0 {
+                    sum += left * right;
+                }
+            }
+        }
+
+        sum
+    }
+
+    fn parse(input: &[u8]) -> Self {
+        let mut parts = Vec::with_capacity(160);
+        let mut numbers = Vec::with_capacity(160);
+        let mut lens = Vec::with_capacity(160);
+        let mut dv = 0;
+        let mut dx = 0;
+        let mut y = 0;
+        let mut x = 0;
+
+        lens.push((0, 0));
+
+        for ch in input.iter() {
+            match *ch {
+                b'\n' => {
+                    if dv > 0 {
+                        numbers.push(PartNumber(dx, y, x - dx, dv));
+                        dv = 0;
+                    }
+
+                    lens.push((parts.len(), numbers.len()));
+
+                    if x == 0 {
+                        break;
+                    }
+
+                    y += 1;
+                    x = 0;
+                }
+
+                b'.' => {
+                    if dv > 0 {
+                        numbers.push(PartNumber(dx, y, x - dx, dv));
+                        dv = 0;
+                    }
+
+                    x += 1;
+                }
+
+                b'0'..=b'9' => {
+                    if dv > 0 {
+                        dv *= 10;
+                        dv += (*ch - b'0') as u32;
+                    } else {
+                        dx = x;
+                        dv = (*ch - b'0') as u32;
+                    }
+
+                    x += 1;
+                }
+
+                _ => {
+                    if dv > 0 {
+                        numbers.push(PartNumber(dx, y, x - dx, dv));
+                        dv = 0;
+                    }
+
+                    parts.push(PartName(x, y, *ch));
+
+                    x += 1;
+                }
+            }
+        }
+
+        lens.push((parts.len(), numbers.len()));
+        Schematic2{parts, numbers, lens, height: y}
+    }
+}
+
+#[derive(Debug)]
+struct PartName (i16, i16, u8);
+#[derive(Debug)]
+struct PartNumber (i16, i16, i16, u32);
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const EXAMPLE: &[u8] = b"467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+";
+
+    #[test]
+    fn p1ng_works_on_example() {
+        let schematic = Schematic2::parse(EXAMPLE);
+
+        assert_eq!(schematic.part_number_sum(), 4361);
+    }
+
+    #[test]
+    fn p2ng_works_on_example() {
+        let schematic = Schematic2::parse(EXAMPLE);
+
+        assert_eq!(schematic.gear_ratio_sum(), 467835);
+    }
 }

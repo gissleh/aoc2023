@@ -99,8 +99,3 @@ impl Game {
         (highest[0] as u32) * (highest[1] as u32) * (highest[2] as u32)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-}
