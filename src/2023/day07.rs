@@ -52,9 +52,14 @@ impl Hand {
             counts[*card as usize] += 1;
         }
 
-        counts.sort_unstable();
-        let highest = counts[14];
-        let second = counts[13];
+        let (highest, second) = counts.iter()
+            .fold((0, 0), |(h, s), c| if *c > h {
+                (*c, h)
+            } else if *c > s {
+                (h, *c)
+            } else {
+                (h, s)
+            });
 
         match highest {
             5 => 7,
@@ -78,9 +83,14 @@ impl Hand {
             }
         }
 
-        counts.sort_unstable();
-        let highest = counts[14];
-        let second = counts[13];
+        let (highest, second) = counts.iter()
+            .fold((0, 0), |(h, s), c| if *c > h {
+                (*c, h)
+            } else if *c > s {
+                (h, *c)
+            } else {
+                (h, s)
+            });
 
         match (highest, jokers) {
             (5, 0) => 7,
