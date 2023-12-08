@@ -59,19 +59,17 @@ impl Scratchcard {
             .then_skip_all(parse::digit::<u8>())
             .and_discard(b':')
             .and_instead(
-                b' '
-                    .then_skip(b' ')
+                b' '.then_skip(b' ')
                     .and_instead(parse::unsigned_int::<u32>())
                     .repeat_fold(|| 0u128, |acc, curr| acc | 1 << curr)
-                    .capped_by(b" |")
+                    .capped_by(b" |"),
             )
             .and(
-                b' '
-                    .then_skip(b' ')
+                b' '.then_skip(b' ')
                     .and_instead(parse::unsigned_int::<u32>())
-                    .repeat_fold(|| 0u128, |acc, curr| acc | 1 << curr)
+                    .repeat_fold(|| 0u128, |acc, curr| acc | 1 << curr),
             )
-            .map(|(w, n)| Self{
+            .map(|(w, n)| Self {
                 numbers: n,
                 winners: w,
             })

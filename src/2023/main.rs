@@ -9,6 +9,7 @@ mod day04;
 mod day05;
 mod day06;
 mod day07;
+mod day08;
 
 fn main() {
     let aoc = AOC::new(2023);
@@ -20,4 +21,5 @@ fn main() {
     aoc.run_day(5, day05::main);
     aoc.run_day(6, day06::main);
     aoc.run_day(7, day07::main);
+    aoc.run_day(8, day08::main);
 }

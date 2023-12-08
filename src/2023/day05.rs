@@ -1,19 +1,25 @@
-use std::mem;
 use common::aoc::Day;
 use common::parse;
 use common::parse::Parser;
+use std::mem;
 
 pub fn main(day: &mut Day, input: &[u8]) {
     let input = day.prep("Parse", || Almanac::parser().parse(input).unwrap());
 
     day.note("Amount of seeds", input.seeds.len());
     day.note("Amount of ranges", input.ranges.len());
-    day.note("Amount of seeds (P2)", input.seeds.array_chunks::<2>().map(|[_, b]| *b).sum::<u64>());
+    day.note(
+        "Amount of seeds (P2)",
+        input
+            .seeds
+            .array_chunks::<2>()
+            .map(|[_, b]| *b)
+            .sum::<u64>(),
+    );
 
     day.part("Part 1", || input.lowest_location());
     day.part("Part 2", || input.lowest_location_range());
 }
-
 
 struct Almanac {
     seeds: Vec<u64>,
@@ -33,16 +39,16 @@ impl Almanac {
                     if *next {
                         pending = false;
                     } else {
-                        continue
+                        continue;
                     }
                 }
                 if value < *src {
-                    continue
+                    continue;
                 }
 
                 let diff = value - *src;
                 if diff >= *len {
-                    continue
+                    continue;
                 }
 
                 value = *dest + diff;
@@ -70,7 +76,7 @@ impl Almanac {
 
             for seed in curr.iter_mut() {
                 if seed[1] == 0 {
-                    continue
+                    continue;
                 }
 
                 *seed = r.split_to(&mut next, *seed);
@@ -95,16 +101,16 @@ impl Almanac {
                         if *next {
                             pending = false;
                         } else {
-                            continue
+                            continue;
                         }
                     }
                     if value < *src {
-                        continue
+                        continue;
                     }
 
                     let diff = value - *src;
                     if diff >= *len {
-                        continue
+                        continue;
                     }
 
                     value = *dest + diff;
@@ -130,26 +136,31 @@ impl Almanac {
                 if pending {
                     if *next {
                         pending = false;
-                        continue
+                        continue;
                     } else {
-                        continue
+                        continue;
                     }
                 }
                 if value < *src {
-                    continue
+                    continue;
                 }
 
                 let diff = value - *src;
                 if diff >= *len {
-                    continue
+                    continue;
                 }
 
                 value = *dest + diff;
                 pending = true;
             }
 
-            if self.seeds.array_chunks::<2>().find(|[n, l]| value >= *n && value < (*n + *l)).is_some() {
-                return location
+            if self
+                .seeds
+                .array_chunks::<2>()
+                .find(|[n, l]| value >= *n && value < (*n + *l))
+                .is_some()
+            {
+                return location;
             }
         }
 
@@ -163,28 +174,22 @@ impl Almanac {
             .then_skip(b'\n');
 
         b"seeds: "
-            .and_instead(
-                parse::unsigned_int().delimited_by(b' ').repeat()
-            )
+            .and_instead(parse::unsigned_int().delimited_by(b' ').repeat())
             .then_skip(b'\n')
             .and(
                 b'\n'
                     .and_discard(parse::line())
                     .and_instead(range_parser)
-                    .map(|[a,b,c]| Range(true, a, b, c))
-                    .or(
-                        range_parser.map(|[a,b,c]| Range(false, a, b, c))
-                    )
-                    .repeat()
+                    .map(|[a, b, c]| Range(true, a, b, c))
+                    .or(range_parser.map(|[a, b, c]| Range(false, a, b, c)))
+                    .repeat(),
             )
-            .map(|(seeds, ranges)| Almanac{
-                seeds, ranges
-            })
+            .map(|(seeds, ranges)| Almanac { seeds, ranges })
     }
 }
 
 #[derive(Debug)]
-struct Range (bool, u64, u64, u64);
+struct Range(bool, u64, u64, u64);
 
 impl Range {
     #[allow(dead_code)]
@@ -239,17 +244,20 @@ mod tests {
         assert_eq!(r.split([50, 50]), ([50, 50], vec![]));
         assert_eq!(r.split([50, 51]), ([50, 50], vec![[200, 1]]));
         assert_eq!(r.split([50, 125]), ([150, 25], vec![[50, 50], [200, 50]]));
-        assert_eq!(r.split([100, 50]), ([100,0], vec![[200, 50]]));
-        assert_eq!(r.split([125, 10]), ([125,0], vec![[225, 10]]));
-        assert_eq!(r.split([140, 10]), ([140,0], vec![[240, 10]]));
-        assert_eq!(r.split([140, 11]), ([150,1], vec![[240, 10]]));
+        assert_eq!(r.split([100, 50]), ([100, 0], vec![[200, 50]]));
+        assert_eq!(r.split([125, 10]), ([125, 0], vec![[225, 10]]));
+        assert_eq!(r.split([140, 10]), ([140, 0], vec![[240, 10]]));
+        assert_eq!(r.split([140, 11]), ([150, 1], vec![[240, 10]]));
     }
 
     #[test]
     fn part2_example() {
         let almanac = Almanac::parser().parse(P1_EXAMPLE).unwrap();
 
-        assert_eq!(almanac.lowest_location_range(), almanac.lowest_location_range_cpu_go_brr());
+        assert_eq!(
+            almanac.lowest_location_range(),
+            almanac.lowest_location_range_cpu_go_brr()
+        );
     }
 
     const P1_EXAMPLE: &[u8] = b"seeds: 79 14 55 13

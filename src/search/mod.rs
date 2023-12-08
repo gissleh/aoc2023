@@ -1,10 +1,10 @@
-use std::cmp::Ordering;
-use std::ops::{AddAssign, SubAssign};
-use num::{Integer, One};
 use crate::utils::gather_target::GatherTarget;
 pub use bfs::bfs;
 pub use dfs::dfs;
 pub use dijkstra::{dijkstra, DijkstraState};
+use num::{Integer, One};
+use std::cmp::Ordering;
+use std::ops::{AddAssign, SubAssign};
 pub use utils::WithCost;
 
 mod bfs;
@@ -82,7 +82,10 @@ pub trait Search<S>: Sized {
 }
 
 pub fn binary_search<I, F>(start: I, initial_step: I, cb: F) -> Option<I>
-    where I: Integer + Copy + One, F: Fn(I) -> Ordering {
+where
+    I: Integer + Copy + One,
+    F: Fn(I) -> Ordering,
+{
     let two = I::one() + I::one();
     let mut current = start;
     let mut step = initial_step;
@@ -90,8 +93,12 @@ pub fn binary_search<I, F>(start: I, initial_step: I, cb: F) -> Option<I>
 
     while ones_left > 0 {
         match cb(current) {
-            Ordering::Equal => { return Some(current); }
-            Ordering::Less => { current = current.add(step); }
+            Ordering::Equal => {
+                return Some(current);
+            }
+            Ordering::Less => {
+                current = current.add(step);
+            }
             Ordering::Greater => {
                 current = current.sub(step);
             }
@@ -107,8 +114,17 @@ pub fn binary_search<I, F>(start: I, initial_step: I, cb: F) -> Option<I>
     None
 }
 
-pub fn find_first_number<I, F>(start: I, end: I, initial_step: I, step_divide: I, cb: F) -> Option<I>
-    where I: Integer + Copy + One + AddAssign + SubAssign, F: Fn(I) -> bool {
+pub fn find_first_number<I, F>(
+    start: I,
+    end: I,
+    initial_step: I,
+    step_divide: I,
+    cb: F,
+) -> Option<I>
+where
+    I: Integer + Copy + One + AddAssign + SubAssign,
+    F: Fn(I) -> bool,
+{
     let one = I::one();
     let zero = I::zero();
     let mut current = start;
@@ -153,8 +169,6 @@ pub fn find_first_number<I, F>(start: I, end: I, initial_step: I, step_divide: I
 
     None
 }
-
-
 
 #[cfg(test)]
 pub(crate) mod tests {

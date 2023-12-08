@@ -1,6 +1,6 @@
 use common::aoc::Day;
 use common::parse;
-use common::parse::{Parser};
+use common::parse::Parser;
 
 pub fn main(day: &mut Day, input: &[u8]) {
     let input: Vec<Hand> = day.prep("Parse", || Hand::parser().repeat().parse(input).unwrap());
@@ -8,31 +8,45 @@ pub fn main(day: &mut Day, input: &[u8]) {
     day.note("Amount of hands", input.len());
 
     day.part("Part 1", || p1(&input));
-    let input: Vec<Hand> = day.prep("Convert J to 1", || input.iter().map(|h| h.convert()).collect());
+    let input: Vec<Hand> = day.prep("Convert J to 1", || {
+        input.iter().map(|h| h.convert()).collect()
+    });
     day.part("Part 2", || p2(&input));
 }
 
 fn p1(hands: &[Hand]) -> u32 {
-    let mut levels: Vec<(u32, usize)> = hands.iter().enumerate().map(|(i, h)| (h.level(), i)).collect();
+    let mut levels: Vec<(u32, usize)> = hands
+        .iter()
+        .enumerate()
+        .map(|(i, h)| (h.level(), i))
+        .collect();
 
     levels.sort_by(|(al, ai), (bl, bi)| {
-        al.cmp(bl).then_with(|| hands[*ai].cards.cmp(&hands[*bi].cards))
+        al.cmp(bl)
+            .then_with(|| hands[*ai].cards.cmp(&hands[*bi].cards))
     });
 
-    levels.iter()
+    levels
+        .iter()
         .enumerate()
         .map(|(i, (_, index))| hands[*index].bid * (i + 1) as u32)
         .sum()
 }
 
 fn p2(hands: &[Hand]) -> u32 {
-    let mut levels: Vec<(u32, usize)> = hands.iter().enumerate().map(|(i, h)| (h.joker_level(), i)).collect();
+    let mut levels: Vec<(u32, usize)> = hands
+        .iter()
+        .enumerate()
+        .map(|(i, h)| (h.joker_level(), i))
+        .collect();
 
     levels.sort_by(|(al, ai), (bl, bi)| {
-        al.cmp(bl).then_with(|| hands[*ai].cards.cmp(&hands[*bi].cards))
+        al.cmp(bl)
+            .then_with(|| hands[*ai].cards.cmp(&hands[*bi].cards))
     });
 
-    levels.iter()
+    levels
+        .iter()
         .enumerate()
         .map(|(i, (_, index))| hands[*index].bid * (i + 1) as u32)
         .sum()
@@ -52,14 +66,15 @@ impl Hand {
             counts[*card as usize] += 1;
         }
 
-        let (highest, second) = counts.iter()
-            .fold((0, 0), |(h, s), c| if *c > h {
+        let (highest, second) = counts.iter().fold((0, 0), |(h, s), c| {
+            if *c > h {
                 (*c, h)
             } else if *c > s {
                 (h, *c)
             } else {
                 (h, s)
-            });
+            }
+        });
 
         match highest {
             5 => 7,
@@ -83,14 +98,15 @@ impl Hand {
             }
         }
 
-        let (highest, second) = counts.iter()
-            .fold((0, 0), |(h, s), c| if *c > h {
+        let (highest, second) = counts.iter().fold((0, 0), |(h, s), c| {
+            if *c > h {
                 (*c, h)
             } else if *c > s {
                 (h, *c)
             } else {
                 (h, s)
-            });
+            }
+        });
 
         match (highest, jokers) {
             (5, 0) => 7,
@@ -132,7 +148,7 @@ impl Hand {
 
     #[inline]
     fn new(cards: [u8; 5], bid: u32) -> Self {
-        Self{cards, bid}
+        Self { cards, bid }
     }
 
     fn parser<'i>() -> impl Parser<'i, Self> {
@@ -144,11 +160,11 @@ impl Hand {
             b'K'.map_to(13),
             b'A'.map_to(14),
         ))
-            .repeat_n(5)
-            .and_discard(b' ')
-            .and(parse::unsigned_int())
-            .then_skip(b'\n')
-            .map(|(cards, bid)| Hand::new(cards, bid) )
+        .repeat_n(5)
+        .and_discard(b' ')
+        .and(parse::unsigned_int())
+        .then_skip(b'\n')
+        .map(|(cards, bid)| Hand::new(cards, bid))
     }
 }
 

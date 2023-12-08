@@ -9,7 +9,14 @@ pub fn main(day: &mut Day, input: &[u8]) {
     day.note("Width", schematic.map.width());
     day.note("Height", schematic.map.height());
     day.note("Numbers", schematic.next_index);
-    day.note("Parts", schematic.map.iter().filter(|(_, c)| if let Cell::Symbol(_) = c { true } else { false }).count());
+    day.note(
+        "Parts",
+        schematic
+            .map
+            .iter()
+            .filter(|(_, c)| if let Cell::Symbol(_) = c { true } else { false })
+            .count(),
+    );
 
     day.part("Part 1", || schematic.part_number_sum());
     day.part("Part 2", || schematic.gear_ratios_sum());
@@ -24,7 +31,6 @@ pub fn main(day: &mut Day, input: &[u8]) {
 
     day.part("Part 1 (NG)", || schematic2.part_number_sum());
     day.part("Part 2 (NG)", || schematic2.gear_ratio_sum());
-
 }
 
 struct Schematic {
@@ -331,14 +337,19 @@ impl Schematic2 {
         }
 
         lens.push((parts.len(), numbers.len()));
-        Schematic2{parts, numbers, lens, height: y}
+        Schematic2 {
+            parts,
+            numbers,
+            lens,
+            height: y,
+        }
     }
 }
 
 #[derive(Debug)]
-struct PartName (i16, u8);
+struct PartName(i16, u8);
 #[derive(Debug)]
-struct PartNumber (i16, i16, u32);
+struct PartNumber(i16, i16, u32);
 
 #[cfg(test)]
 mod tests {
