@@ -36,35 +36,57 @@ pub fn main(day: &mut Day, input: &[u8]) {
 }
 
 fn p1(input: &Grid<u8, Vec<u8>>) -> ResultCarrying<u32, Grid<u8, Vec<u8>>> {
-    let pos = input.find(&START).unwrap();
-    let tl = Point::new(0, 0);
-    let br = Point::new(input.width(), input.height());
-
+    let [x, y] = *input.find(&START).unwrap().coords();
     let grid = Grid::<u8, Vec<u8>>::new_with_value(input.width(), input.height(), 0);
 
-    let (grid, res) = search::bfs().with_initial_state(WithCost(pos, 0u32))
-        .fill(grid, |s, grid, WithCost(pos, steps)| {
-            let curr = input[pos];
-            let mut cell = 0;
+    let (grid, res) = search::bfs().with_initial_state(WithCost((x, y), 0u32))
+        .fill(grid, |s, grid, WithCost((x, y), steps)| {
+            let curr = input[(x, y)];
+            let mut cell = curr;
 
-            for (i, next_pos) in pos.cardinals_within(tl, br).iter().enumerate() {
-                if curr & DIRECTIONS[i] == 0 {
-                    continue;
+            match curr {
+                PIPE_LR => {
+                    s.add_state(WithCost((x - 1, y), steps + 1));
+                    s.add_state(WithCost((x + 1, y), steps + 1));
                 }
+                PIPE_UD => {
+                    s.add_state(WithCost((x, y - 1), steps + 1));
+                    s.add_state(WithCost((x, y + 1), steps + 1));
+                }
+                PIPE_7 => {
+                    s.add_state(WithCost((x - 1, y), steps + 1));
+                    s.add_state(WithCost((x, y + 1), steps + 1));
+                }
+                PIPE_J => {
+                    s.add_state(WithCost((x, y - 1), steps + 1));
+                    s.add_state(WithCost((x - 1, y), steps + 1));
+                }
+                PIPE_L => {
+                    s.add_state(WithCost((x, y - 1), steps + 1));
+                    s.add_state(WithCost((x + 1, y), steps + 1));
+                }
+                PIPE_F => {
+                    s.add_state(WithCost((x + 1, y), steps + 1));
+                    s.add_state(WithCost((x, y + 1), steps + 1));
+                }
+                START => {
+                    cell = 0;
+                    for (i, next_pos) in Point::new(x, y).cardinals().iter().enumerate() {
+                        let next = input[*next_pos];
+                        if next & OPENINGS[i] == 0 {
+                            continue;
+                        }
 
-                if let Some(next_pos) = next_pos {
-                    let next = input[*next_pos];
-                    if next & OPENINGS[i] == 0 {
-                        continue;
+                        cell = cell | DIRECTIONS[i];
+
+                        let [x, y] = *next_pos.coords();
+                        s.add_state(WithCost((x, y), steps + 1))
                     }
-
-                    cell = cell | DIRECTIONS[i];
-
-                    s.add_state(WithCost(*next_pos, steps + 1))
                 }
+                _ => panic!("Unknown {}", curr)
             }
 
-            grid[pos] = cell;
+            grid[(x, y)] = cell;
 
             Some(steps)
         });
