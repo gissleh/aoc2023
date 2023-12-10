@@ -12,6 +12,27 @@ where
     }
 }
 
+pub struct ResultCarrying<T, U>(pub T, pub U);
+
+impl<T, U> ResultCarrying<T, U> {
+    pub fn res(self) -> T {
+        self.0
+    }
+
+    pub fn carry(self) -> U {
+        self.1
+    }
+}
+
+impl<T, U> Display for ResultCarrying<T, U>
+    where
+        T: Display,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} (+ carrying data)", self.0)
+    }
+}
+
 pub fn format_duration(ns: i64) -> String {
     if ns == i64::MAX {
         return "-".to_string();

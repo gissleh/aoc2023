@@ -39,6 +39,19 @@ pub trait Search<S>: Sized {
         None
     }
 
+    fn find_mut<F, R>(&mut self, mut f: F) -> Option<R>
+        where
+            F: FnMut(&mut Self, S) -> Option<R>,
+    {
+        while let Some(state) = self.next_state() {
+            if let Some(v) = f(self, state) {
+                return Some(v);
+            }
+        }
+
+        None
+    }
+
     /// maximize exhausts the search and returns the greatest value from it.
     fn maximize<F, R>(&mut self, f: F) -> Option<R>
     where
@@ -58,6 +71,28 @@ pub trait Search<S>: Sized {
         }
 
         king
+    }
+
+    /// Fill does the same as `maximize`, but lets you also mutate an object within the
+    /// loop that you get back after its completion.
+    fn fill<F, M, R>(&mut self, mut m: M, mut f: F) -> (M, Option<R>)
+        where
+            F: FnMut(&mut Self, &mut M, S) -> Option<R>,
+            R: Ord,
+    {
+        let mut king = None;
+
+        while let Some(v) = self.find_mut(|search, state| f(search, &mut m, state)) {
+            if let Some(k) = &mut king {
+                if v > *k {
+                    *k = v;
+                }
+            } else {
+                king = Some(v);
+            }
+        }
+
+        (m, king)
     }
 
     /// Gather exhausts find_next, but will stop early if the collection referred to in G is full.

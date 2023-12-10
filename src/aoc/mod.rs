@@ -2,7 +2,7 @@ use chrono::Datelike;
 pub use day::Day;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
-pub use utils::BothParts;
+pub use utils::{BothParts, ResultCarrying};
 
 mod day;
 mod utils;
