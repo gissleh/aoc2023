@@ -35,16 +35,17 @@ impl Universe {
 
         for i in 0..self.galaxies.len() {
             let [ix, iy] = *self.galaxies[i].coords();
+            let row_offset = self.empty_rows.iter().position(|y| *y >= iy).unwrap_or_else(|| self.empty_rows.len());
+
             for j in (i + 1)..self.galaxies.len() {
                 let [jx, jy] = *self.galaxies[j].coords();
 
                 let (min_x, max_x) = if jx > ix { (ix, jx) } else { (jx, ix) };
-                let (min_y, max_y) = if jy > iy { (iy, jy) } else { (jy, iy) };
 
-                let exps = self.empty_rows.iter().filter(|y| **y > min_y && **y < max_y).count()
+                let exps = self.empty_rows[row_offset..].iter().take_while(|y| **y < jy).count()
                     + self.empty_cols.iter().filter(|x| **x > min_x && **x < max_x).count();
 
-                let dist = (jx - ix).abs() + (jy - iy).abs();
+                let dist = (max_x - min_x) + (jy - iy);
 
                 #[cfg(test)]
                 println!("{}-{}: {} ({},{} -> {},{} + {})", i + 1, j + 1, dist, ix, iy, jx, jy, exps);
