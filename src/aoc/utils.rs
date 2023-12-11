@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct BothParts<T, U>(pub T, pub U);
 
 impl<T, U> Display for BothParts<T, U>
