@@ -13,7 +13,7 @@ mod day08;
 mod day09;
 mod day10;
 mod day11;
-//mod day12;
+mod day12;
 //mod day13;
 //mod day14;
 //mod day15;
@@ -42,7 +42,7 @@ fn main() {
     aoc.run_day(9, day09::main);
     aoc.run_day(10, day10::main);
     aoc.run_day(11, day11::main);
-    //aoc.run_day(12, day12::main);
+    aoc.run_day(12, day12::main);
     //aoc.run_day(13, day13::main);
     //aoc.run_day(14, day14::main);
     //aoc.run_day(15, day15::main);
