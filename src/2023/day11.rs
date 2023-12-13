@@ -35,20 +35,41 @@ impl Universe {
 
         for i in 0..self.galaxies.len() {
             let [ix, iy] = *self.galaxies[i].coords();
-            let row_offset = self.empty_rows.iter().position(|y| *y >= iy).unwrap_or_else(|| self.empty_rows.len());
+            let row_offset = self
+                .empty_rows
+                .iter()
+                .position(|y| *y >= iy)
+                .unwrap_or_else(|| self.empty_rows.len());
 
             for j in (i + 1)..self.galaxies.len() {
                 let [jx, jy] = *self.galaxies[j].coords();
 
                 let (min_x, max_x) = if jx > ix { (ix, jx) } else { (jx, ix) };
 
-                let exps = self.empty_rows[row_offset..].iter().take_while(|y| **y < jy).count()
-                    + self.empty_cols.iter().filter(|x| **x > min_x && **x < max_x).count();
+                let exps = self.empty_rows[row_offset..]
+                    .iter()
+                    .take_while(|y| **y < jy)
+                    .count()
+                    + self
+                        .empty_cols
+                        .iter()
+                        .filter(|x| **x > min_x && **x < max_x)
+                        .count();
 
                 let dist = (max_x - min_x) + (jy - iy);
 
                 #[cfg(test)]
-                println!("{}-{}: {} ({},{} -> {},{} + {})", i + 1, j + 1, dist, ix, iy, jx, jy, exps);
+                println!(
+                    "{}-{}: {} ({},{} -> {},{} + {})",
+                    i + 1,
+                    j + 1,
+                    dist,
+                    ix,
+                    iy,
+                    jx,
+                    jy,
+                    exps
+                );
 
                 sum += dist;
                 total_exps += exps;
@@ -59,7 +80,7 @@ impl Universe {
     }
 
     fn new() -> Self {
-        Self{
+        Self {
             galaxies: Vec::with_capacity(64),
             empty_rows: Vec::with_capacity(64),
             empty_cols: Vec::with_capacity(64),
@@ -67,45 +88,46 @@ impl Universe {
     }
 
     fn parser<'i>() -> impl Parser<'i, Self> {
-        parse::everything()
-            .map(|grid| {
-                let mut universe = Self::new();
-                let mut x = 0;
-                let mut y = 0;
-                let mut w = 0;
-                let mut empty_row = true;
+        parse::everything().map(|grid| {
+            let mut universe = Self::new();
+            let mut x = 0;
+            let mut y = 0;
+            let mut w = 0;
+            let mut empty_row = true;
 
-                for b in grid {
-                    match b {
-                        b'.' => {
-                            x += 1
-                        }
-                        b'#' => {
-                            universe.galaxies.push(Point::new(x, y));
-                            empty_row = false;
-                            x += 1;
-                        }
-                        b'\n' => {
-                            if empty_row {
-                                universe.empty_rows.push(y);
-                            }
-
-                            empty_row = true;
-                            w = x;
-                            y += 1;
-                            x = 0;
-                        }
-
-                        _ => panic!("Unrecognized character {}", b)
+            for b in grid {
+                match b {
+                    b'.' => x += 1,
+                    b'#' => {
+                        universe.galaxies.push(Point::new(x, y));
+                        empty_row = false;
+                        x += 1;
                     }
+                    b'\n' => {
+                        if empty_row {
+                            universe.empty_rows.push(y);
+                        }
+
+                        empty_row = true;
+                        w = x;
+                        y += 1;
+                        x = 0;
+                    }
+
+                    _ => panic!("Unrecognized character {}", b),
                 }
+            }
 
-                universe.empty_cols.extend(
-                    (0..w).filter(|x| universe.galaxies.iter().find(|g| g.coords()[0] == *x).is_none())
-                );
-
+            universe.empty_cols.extend((0..w).filter(|x| {
                 universe
-            })
+                    .galaxies
+                    .iter()
+                    .find(|g| g.coords()[0] == *x)
+                    .is_none()
+            }));
+
+            universe
+        })
     }
 }
 
@@ -136,4 +158,3 @@ mod tests {
         assert_eq!(input.both_parts::<9>(), BothParts(374, 1030));
     }
 }
-

@@ -11,8 +11,22 @@ pub fn main(day: &mut Day, input: &[u8]) {
 
     day.note("Instructions", input.instructions.len());
     day.note("Paths", input.paths.len());
-    day.note("A-Paths", input.paths.iter().filter(|Path(name, _, _)| *name % 26 == 0).count());
-    day.note("Z-Paths", input.paths.iter().filter(|Path(name, _, _)| *name % 26 == 25).count());
+    day.note(
+        "A-Paths",
+        input
+            .paths
+            .iter()
+            .filter(|Path(name, _, _)| *name % 26 == 0)
+            .count(),
+    );
+    day.note(
+        "Z-Paths",
+        input
+            .paths
+            .iter()
+            .filter(|Path(name, _, _)| *name % 26 == 25)
+            .count(),
+    );
 
     day.part("Part 1", || input.follow());
     day.part("Part 2", || input.follow_ghostily());
@@ -29,7 +43,7 @@ impl Map {
 
         for (i, Path(name, _, _)) in self.paths.iter().enumerate() {
             if *name % 26 != 0 {
-                continue
+                continue;
             }
 
             let c = self.follow_from(i, |n| n % 26 == 25);
@@ -46,10 +60,10 @@ impl Map {
         for go_right in self.instructions.iter().cycle() {
             let Path(name, left, right) = self.paths[curr];
             if f(name) {
-                break
+                break;
             }
 
-            curr = if *go_right { right } else {left};
+            curr = if *go_right { right } else { left };
             steps += 1;
         }
 
@@ -57,7 +71,11 @@ impl Map {
     }
 
     fn follow(&self) -> u64 {
-        let curr = self.paths.iter().position(|Path(c, _, _)| *c == AAA).unwrap();
+        let curr = self
+            .paths
+            .iter()
+            .position(|Path(c, _, _)| *c == AAA)
+            .unwrap();
         self.follow_from(curr, |n| n == ZZZ)
     }
 

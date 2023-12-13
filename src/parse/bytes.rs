@@ -137,5 +137,5 @@ pub fn word<'i>() -> impl Parser<'i, &'i [u8]> {
 
 #[inline]
 pub fn line<'i>() -> impl Parser<'i, &'i [u8]> {
-    BytesUntil(b'\n', true)
+    BytesUntil(b'\n', true).or(everything())
 }

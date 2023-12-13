@@ -26,8 +26,8 @@ impl<T, U> ResultCarrying<T, U> {
 }
 
 impl<T, U> Display for ResultCarrying<T, U>
-    where
-        T: Display,
+where
+    T: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} (+ carrying data)", self.0)

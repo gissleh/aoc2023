@@ -1,7 +1,7 @@
-use rustc_hash::FxHashMap;
 use common::aoc::Day;
 use common::parse;
 use common::parse::Parser;
+use rustc_hash::FxHashMap;
 
 const FUNCTIONAL: u8 = b'.';
 const BROKEN: u8 = b'#';
@@ -19,7 +19,8 @@ pub fn main(day: &mut Day, input: &[u8]) {
 fn p1(lines: &[Line]) -> u64 {
     let mut checker = Checker::new();
 
-    lines.iter()
+    lines
+        .iter()
         .map(move |l| checker.run(&l.template, &l.rules, 0))
         .sum()
 }
@@ -31,7 +32,7 @@ struct Line {
 
 impl Line {
     fn unfold(&self) -> Line {
-        let mut line = Line{
+        let mut line = Line {
             template: Vec::with_capacity(self.template.len() * 5 + 5),
             rules: Vec::with_capacity(self.rules.len() * 5),
         };
@@ -51,11 +52,8 @@ impl Line {
         parse::everything()
             .capped_by(b' ')
             .map(|l| l.iter().copied().collect())
-            .and(                parse::unsigned_int()
-                    .delimited_by(b',')
-                    .repeat()
-            )
-            .map(|(template, rules)| Self{template, rules})
+            .and(parse::unsigned_int().delimited_by(b',').repeat())
+            .map(|(template, rules)| Self { template, rules })
             .and_discard(b'\n')
             .repeat()
             .parse(input)
@@ -65,7 +63,7 @@ impl Line {
 
 struct Checker {
     key_buf: Vec<u8>,
-    cache: FxHashMap<Vec<u8>, u64>
+    cache: FxHashMap<Vec<u8>, u64>,
 }
 
 impl Checker {
@@ -115,7 +113,7 @@ impl Checker {
     }
 
     fn new() -> Self {
-        Self{
+        Self {
             cache: FxHashMap::default(),
             key_buf: Vec::with_capacity(128),
         }
@@ -199,37 +197,64 @@ mod tests {
 
     #[test]
     fn satisfies() {
-        assert_eq!(Checker::satisfies(b"???.###", 1), MatchResult::Open(b"?.###"));
+        assert_eq!(
+            Checker::satisfies(b"???.###", 1),
+            MatchResult::Open(b"?.###")
+        );
         assert_eq!(Checker::satisfies(b"?.###", 1), MatchResult::Open(b"###"));
         assert_eq!(Checker::satisfies(b"###", 3), MatchResult::Locked(b""));
         assert_eq!(Checker::satisfies(b"?###????????", 3), MatchResult::None);
-        assert_eq!(Checker::satisfies(b"###????????", 3), MatchResult::Locked(b"???????".as_slice()));
-        assert_eq!(Checker::satisfies(b"???????", 2), MatchResult::Open(b"????".as_slice()));
+        assert_eq!(
+            Checker::satisfies(b"###????????", 3),
+            MatchResult::Locked(b"???????".as_slice())
+        );
+        assert_eq!(
+            Checker::satisfies(b"???????", 2),
+            MatchResult::Open(b"????".as_slice())
+        );
 
         assert_eq!(Checker::satisfies(b".##.?#??.#.?#", 2), MatchResult::None);
-        assert_eq!(Checker::satisfies(b"##.?#??.#.?#", 2), MatchResult::Locked(b"?#??.#.?#".as_slice()));
+        assert_eq!(
+            Checker::satisfies(b"##.?#??.#.?#", 2),
+            MatchResult::Locked(b"?#??.#.?#".as_slice())
+        );
         assert_eq!(Checker::satisfies(b"?#??.#.?#", 1), MatchResult::None);
-        assert_eq!(Checker::satisfies(b"#??.#.?#", 1), MatchResult::Locked(b"?.#.?#".as_slice()));
-        assert_eq!(Checker::satisfies(b"?.#.?#", 1), MatchResult::Open(b"#.?#".as_slice()));
-        assert_eq!(Checker::satisfies(b"#.?#", 1), MatchResult::Locked(b"?#".as_slice()));
+        assert_eq!(
+            Checker::satisfies(b"#??.#.?#", 1),
+            MatchResult::Locked(b"?.#.?#".as_slice())
+        );
+        assert_eq!(
+            Checker::satisfies(b"?.#.?#", 1),
+            MatchResult::Open(b"#.?#".as_slice())
+        );
+        assert_eq!(
+            Checker::satisfies(b"#.?#", 1),
+            MatchResult::Locked(b"?#".as_slice())
+        );
         assert_eq!(Checker::satisfies(b"?#", 1), MatchResult::None);
-        assert_eq!(Checker::satisfies(b"#", 1), MatchResult::Locked(b"".as_slice()));
+        assert_eq!(
+            Checker::satisfies(b"#", 1),
+            MatchResult::Locked(b"".as_slice())
+        );
     }
 
     #[test]
     fn counting_works_on_example() {
         assert_eq!(Checker::run_isolated(b"???.###", &[1, 1, 3]), 1);
         assert_eq!(Checker::run_isolated(b".??..??...?##.", &[1, 1, 3]), 4);
-        assert_eq!(Checker::run_isolated(b"?#?#?#?#?#?#?#?", &[1,3,1,6]), 1);
-        assert_eq!(Checker::run_isolated(b"????.#...#...", &[4,1,1]), 1);
-        assert_eq!(Checker::run_isolated(b"????.######..#####.", &[1,6,5]), 4);
-        assert_eq!(Checker::run_isolated(b"?###????????", &[3,2,1]), 10);
-        assert_eq!(Checker::run_isolated(b"??#.?#?#???", &[1,3,1]), 2);
-        assert_eq!(Checker::run_isolated(b"??##?#?????..", &[5,1]), 7);
-        assert_eq!(Checker::run_isolated(b"#??????????", &[1,1,7]), 1);
-        assert_eq!(Checker::run_isolated(b"#??#????.?##??#????.", &[1,4,1,3,1,3]), 2);
-        assert_eq!(Checker::run_isolated(b"?????#???????.", &[5,5]), 3);
-        assert_eq!(Checker::run_isolated(b".##.?#??.#.?#", &[2,1,1,1]), 1);
+        assert_eq!(Checker::run_isolated(b"?#?#?#?#?#?#?#?", &[1, 3, 1, 6]), 1);
+        assert_eq!(Checker::run_isolated(b"????.#...#...", &[4, 1, 1]), 1);
+        assert_eq!(Checker::run_isolated(b"????.######..#####.", &[1, 6, 5]), 4);
+        assert_eq!(Checker::run_isolated(b"?###????????", &[3, 2, 1]), 10);
+        assert_eq!(Checker::run_isolated(b"??#.?#?#???", &[1, 3, 1]), 2);
+        assert_eq!(Checker::run_isolated(b"??##?#?????..", &[5, 1]), 7);
+        assert_eq!(Checker::run_isolated(b"#??????????", &[1, 1, 7]), 1);
+        assert_eq!(
+            Checker::run_isolated(b"#??#????.?##??#????.", &[1, 4, 1, 3, 1, 3]),
+            2
+        );
+        assert_eq!(Checker::run_isolated(b"?????#???????.", &[5, 5]), 3);
+        assert_eq!(Checker::run_isolated(b".##.?#??.#.?#", &[2, 1, 1, 1]), 1);
     }
 
     #[test]

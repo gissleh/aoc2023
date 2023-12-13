@@ -47,9 +47,9 @@ where
 }
 
 impl<T> Point<T>
-    where
-        T: SimdElement,
-        T: Copy + Add<Output = T> + Sub<Output = T> + Ord + One,
+where
+    T: SimdElement,
+    T: Copy + Add<Output = T> + Sub<Output = T> + Ord + One,
 {
     #[inline]
     pub fn cardinals_within(&self, tl: Point<T>, br: Point<T>) -> [Option<Point<T>>; 4] {
@@ -59,10 +59,26 @@ impl<T> Point<T>
         let one = T::one();
 
         [
-            if y > t { Some(Point::new(x, y - one)) } else { None },
-            if x > l { Some(Point::new(x - one, y)) } else { None },
-            if x < r { Some(Point::new(x + one, y)) } else { None },
-            if y < b { Some(Point::new(x, y + one)) } else { None },
+            if y > t {
+                Some(Point::new(x, y - one))
+            } else {
+                None
+            },
+            if x > l {
+                Some(Point::new(x - one, y))
+            } else {
+                None
+            },
+            if x < r {
+                Some(Point::new(x + one, y))
+            } else {
+                None
+            },
+            if y < b {
+                Some(Point::new(x, y + one))
+            } else {
+                None
+            },
         ]
     }
 }

@@ -22,8 +22,8 @@ const PIPE_F: u8 = RIGHT | DOWN;
 const NO_PIPE: u8 = 0b0000;
 const START: u8 = 0b1111;
 
-const DIRECTIONS: [u8; 4] = [ UP, LEFT, RIGHT, DOWN ];
-const OPENINGS: [u8; 4] = [ DOWN, RIGHT, LEFT, UP ];
+const DIRECTIONS: [u8; 4] = [UP, LEFT, RIGHT, DOWN];
+const OPENINGS: [u8; 4] = [DOWN, RIGHT, LEFT, UP];
 
 pub fn main(day: &mut Day, input: &[u8]) {
     let input = day.prep("Parse", || parse(input));
@@ -39,7 +39,8 @@ fn p1(input: &Grid<u8, Vec<u8>>) -> ResultCarrying<u32, Grid<u8, Vec<u8>>> {
     let [x, y] = *input.find(&START).unwrap().coords();
     let grid = Grid::<u8, Vec<u8>>::new_with_value(input.width(), input.height(), 0);
 
-    let (grid, res) = search::bfs().with_initial_state(WithCost((x, y), 0u32))
+    let (grid, res) = search::bfs()
+        .with_initial_state(WithCost((x, y), 0u32))
         .fill(grid, |s, grid, WithCost((x, y), steps)| {
             let curr = input[(x, y)];
             let mut cell = curr;
@@ -83,7 +84,7 @@ fn p1(input: &Grid<u8, Vec<u8>>) -> ResultCarrying<u32, Grid<u8, Vec<u8>>> {
                         s.add_state(WithCost((x, y), steps + 1))
                     }
                 }
-                _ => panic!("Unknown {}", curr)
+                _ => panic!("Unknown {}", curr),
             }
 
             grid[(x, y)] = cell;
@@ -138,7 +139,9 @@ fn parse(input: &[u8]) -> Grid<u8, Vec<u8>> {
         b'F' => PIPE_F,
         b'S' => START,
         _ => panic!("Unknown symbol {}", s),
-    })).parse(input).unwrap()
+    }))
+    .parse(input)
+    .unwrap()
 }
 
 #[cfg(test)]

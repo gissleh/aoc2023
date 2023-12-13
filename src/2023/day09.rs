@@ -7,7 +7,10 @@ pub fn main(day: &mut Day, input: &[u8]) {
     let input = day.prep("Parse", || Sequence::list_parser().parse(input).unwrap());
 
     day.note("Input count", input.len());
-    day.note("Input max length", input.iter().map(|s| s.numbers.len()).max().unwrap());
+    day.note(
+        "Input max length",
+        input.iter().map(|s| s.numbers.len()).max().unwrap(),
+    );
 
     day.part("Part 1", || p1(&input));
     day.part("Part 2", || p2(&input));
@@ -37,7 +40,7 @@ fn p2(sequences: &[Sequence]) -> i64 {
 
 #[derive(Clone, Debug)]
 struct Sequence {
-    numbers: ArrayVec<i64, 32>
+    numbers: ArrayVec<i64, 32>,
 }
 
 impl Sequence {
@@ -50,7 +53,7 @@ impl Sequence {
             buf.push(next);
 
             if !nonzero {
-                break
+                break;
             }
         }
 
@@ -67,7 +70,7 @@ impl Sequence {
         let mut numbers = self.numbers.clone();
         numbers.reverse();
 
-        Sequence{ numbers }
+        Sequence { numbers }
     }
 
     fn subseq(&self) -> (Sequence, bool) {
@@ -82,7 +85,7 @@ impl Sequence {
             numbers.push(v);
         }
 
-        (Sequence{numbers}, nonzero)
+        (Sequence { numbers }, nonzero)
     }
 
     fn list_parser<'i>() -> impl Parser<'i, Vec<Sequence>> {
@@ -94,7 +97,7 @@ impl Sequence {
             .delimited_by(b' ')
             .repeat()
             .then_skip(b'\n')
-            .map(|numbers| Sequence{numbers})
+            .map(|numbers| Sequence { numbers })
     }
 }
 
