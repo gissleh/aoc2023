@@ -42,7 +42,6 @@ fn p2(input: &[Pattern]) -> u32 {
     sum
 }
 
-
 fn parse(input: &[u8]) -> Vec<Pattern> {
     Pattern::parser().repeat().parse(input).unwrap()
 }
@@ -106,7 +105,6 @@ impl Pattern {
                 let u = r - step;
                 let d = r + step + 1;
                 if d >= len {
-
                     break;
                 }
 

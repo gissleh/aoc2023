@@ -1,7 +1,7 @@
-use std::hash::{Hash, Hasher};
 use crate::geo::Point;
 use crate::parse::{everything, line, ParseResult, Parser};
 use crate::utils::gather_target::GatherTarget;
+use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 pub use storage::GridStorage;
 
@@ -15,7 +15,11 @@ pub struct Grid<T, S = Vec<T>> {
     height: usize,
 }
 
-impl<T, S> Hash for Grid<T, S> where S: Hash, T: Hash {
+impl<T, S> Hash for Grid<T, S>
+where
+    S: Hash,
+    T: Hash,
+{
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.storage.hash(state)
     }

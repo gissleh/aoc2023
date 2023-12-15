@@ -1,6 +1,6 @@
-use rustc_hash::FxHashMap;
 use common::aoc::Day;
 use common::grid::Grid;
+use rustc_hash::FxHashMap;
 
 const WALL: u8 = b'#';
 const FLOOR: u8 = b'.';
