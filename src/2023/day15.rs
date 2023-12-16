@@ -102,8 +102,3 @@ enum HashOp<'i> {
     Set(&'i [u8], u8),
     Remove(&'i [u8]),
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-}

@@ -263,6 +263,32 @@ where
     }
 }
 
+impl<S> Grid<u8, S>
+    where
+        S: GridStorage<u8>,
+{
+    pub fn parse_padded(input: &[u8], padding: u8) -> Grid<u8, S> {
+        let width = input.iter().position(|v| *v == b'\n').unwrap();
+        let height = input.len() / (width + 1);
+        let mut grid = Grid::new_with_value(width + 2, height + 2, padding);
+
+        let mut x = 1;
+        let mut y = 1;
+        for v in input.iter() {
+            if *v == b'\n' {
+                y += 1;
+                x = 1;
+            } else {
+                grid[(x, y)] = *v;
+                x += 1;
+            }
+        }
+
+        grid
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;

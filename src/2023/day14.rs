@@ -7,7 +7,7 @@ const FLOOR: u8 = b'.';
 const STONE: u8 = b'O';
 
 pub fn main(day: &mut Day, input: &[u8]) {
-    let input = day.prep("Parse", || parse(input));
+    let input = day.prep("Parse", || Grid::parse_padded(input, WALL));
 
     day.note("Input Width", input.width() - 2);
     day.note("Input Height", input.height() - 2);
@@ -116,26 +116,6 @@ fn tilt_rev<M: Fn(usize, usize) -> (usize, usize)>(grid: &mut Grid<u8, Vec<u8>>,
     movements
 }
 
-fn parse(input: &[u8]) -> Grid<u8, Vec<u8>> {
-    let width = input.iter().position(|v| *v == b'\n').unwrap();
-    let height = input.len() / (width + 1);
-    let mut grid = Grid::new_with_value(width + 2, height + 2, WALL);
-
-    let mut x = 1;
-    let mut y = 1;
-    for v in input.iter() {
-        if *v == b'\n' {
-            y += 1;
-            x = 1;
-        } else {
-            grid[(x, y)] = *v;
-            x += 1;
-        }
-    }
-
-    grid
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -154,11 +134,11 @@ O.#..O.#.#
 
     #[test]
     fn p1_works_on_example() {
-        assert_eq!(p1(&parse(P1_EXAMPLE)), 136);
+        assert_eq!(p1(&Grid::parse_padded(P1_EXAMPLE, WALL)), 136);
     }
 
     #[test]
     fn p2_works_on_example() {
-        assert_eq!(p2(&parse(P1_EXAMPLE)), 64);
+        assert_eq!(p2(&Grid::parse_padded(P1_EXAMPLE, WALL)), 64);
     }
 }

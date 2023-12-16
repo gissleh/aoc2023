@@ -117,8 +117,3 @@ struct Path(u16, usize, usize);
 const fn to_name_num(n: [u8; 3]) -> u16 {
     (n[0] - b'A') as u16 * 676 + (n[1] - b'A') as u16 * 26 + (n[2] - b'A') as u16
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-}
