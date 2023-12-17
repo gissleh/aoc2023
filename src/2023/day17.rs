@@ -1,6 +1,6 @@
 use common::aoc::Day;
 use common::grid::Grid;
-use common::search::{Search, dijkstra, WithCost};
+use common::search::{dijkstra, Search, WithCost};
 
 const BOUNDARY: u8 = 0;
 
@@ -95,7 +95,10 @@ fn parse(input: &[u8]) -> Grid<u8, Vec<u8>> {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
 enum Direction {
-    Up = 0, Left = 1, Right = 2, Down = 3
+    Up = 0,
+    Left = 1,
+    Right = 2,
+    Down = 3,
 }
 
 impl Direction {
@@ -117,7 +120,6 @@ impl Direction {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

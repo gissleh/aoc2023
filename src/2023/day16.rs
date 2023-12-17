@@ -77,9 +77,7 @@ fn check_from(input: &Grid<u8, Vec<u8>>, start: (usize, usize), dir: Direction) 
                 stack.push((next_dir.next(x, y), next_dir))
             }
 
-            EMPTY => {
-                stack.push((dir.next(x, y), dir))
-            }
+            EMPTY => stack.push((dir.next(x, y), dir)),
 
             SPLITTER_H => {
                 if let Some((dir1, dir2)) = dir.split(false) {
@@ -99,7 +97,7 @@ fn check_from(input: &Grid<u8, Vec<u8>>, start: (usize, usize), dir: Direction) 
                 }
             }
 
-            _ => panic!("Unexpected: {}", curr as char)
+            _ => panic!("Unexpected: {}", curr as char),
         }
     }
 
@@ -108,7 +106,10 @@ fn check_from(input: &Grid<u8, Vec<u8>>, start: (usize, usize), dir: Direction) 
 
 #[derive(Copy, Clone)]
 enum Direction {
-    Up = 0, Left = 1, Right = 2, Down = 3
+    Up = 0,
+    Left = 1,
+    Right = 2,
+    Down = 3,
 }
 
 impl Direction {
@@ -121,7 +122,8 @@ impl Direction {
         }
     }
 
-    fn reflect_tr_bl(self) -> Direction { // /
+    fn reflect_tr_bl(self) -> Direction {
+        // /
         match self {
             Direction::Up => Direction::Right,
             Direction::Left => Direction::Down,
@@ -130,7 +132,8 @@ impl Direction {
         }
     }
 
-    fn reflect_tl_br(self) -> Direction { // \
+    fn reflect_tl_br(self) -> Direction {
+        // \
         match self {
             Direction::Up => Direction::Left,
             Direction::Left => Direction::Up,
@@ -145,7 +148,7 @@ impl Direction {
             (Direction::Down, false) => Some((Direction::Left, Direction::Right)),
             (Direction::Left, true) => Some((Direction::Up, Direction::Down)),
             (Direction::Right, true) => Some((Direction::Up, Direction::Down)),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -168,6 +171,13 @@ mod tests {
 
     #[test]
     fn p1_works_on_example() {
-        assert_eq!(check_from(&Grid::parse_padded(P1_EXAMPLE, EDGE), (1, 1), Direction::Right), 46);
+        assert_eq!(
+            check_from(
+                &Grid::parse_padded(P1_EXAMPLE, EDGE),
+                (1, 1),
+                Direction::Right
+            ),
+            46
+        );
     }
 }
