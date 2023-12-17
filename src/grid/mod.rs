@@ -268,6 +268,17 @@ impl<S> Grid<u8, S>
         S: GridStorage<u8>,
 {
     pub fn parse_padded(input: &[u8], padding: u8) -> Grid<u8, S> {
+        Self::parse_padded_map(input, padding, |v| v)
+    }
+}
+
+impl<T, S> Grid<T, S>
+    where
+        S: GridStorage<T>,
+        T: Copy,
+{
+    pub fn parse_padded_map<F>(input: &[u8], padding: T, f: F) -> Grid<T, S>
+        where F: Fn(u8) -> T {
         let width = input.iter().position(|v| *v == b'\n').unwrap();
         let height = input.len() / (width + 1);
         let mut grid = Grid::new_with_value(width + 2, height + 2, padding);
@@ -279,7 +290,7 @@ impl<S> Grid<u8, S>
                 y += 1;
                 x = 1;
             } else {
-                grid[(x, y)] = *v;
+                grid[(x, y)] = f(*v);
                 x += 1;
             }
         }
@@ -287,7 +298,6 @@ impl<S> Grid<u8, S>
         grid
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -23,6 +23,12 @@ pub trait Search<S>: Sized {
         self
     }
 
+    fn and_additional_state(mut self, state: S) -> Self {
+        self.add_state(state);
+        self
+    }
+
+
     /// Find the next state that returns Some(R) from the callback. This function will not
     /// reset the state between runs, and you could continue where you left off by calling it
     /// again if the search is for multiple objects.
