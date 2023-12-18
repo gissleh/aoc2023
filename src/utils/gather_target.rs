@@ -185,3 +185,14 @@ where
         index == 5
     }
 }
+
+impl GatherTarget<()> for u32 {
+    fn start_gathering(_size_hint: usize) -> Self {
+        0
+    }
+
+    fn gather_into(&mut self, _index: usize, _value: ()) -> bool {
+        *self += 1;
+        false
+    }
+}

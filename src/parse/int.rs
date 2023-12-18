@@ -30,6 +30,43 @@ where
 }
 
 #[derive(Copy, Clone)]
+struct HexDigit<T>(PhantomData<T>);
+
+impl<'i, T> Parser<'i, T> for HexDigit<T>
+where
+    T: Copy + From<u8>,
+{
+    #[inline]
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, T> {
+        if input.len() == 0 {
+            ParseResult::new_bad("Digit parsed empty number")
+        } else {
+            match input[0] {
+                b'0'..=b'9' => ParseResult::Good(T::from(input[0] - b'0'), &input[1..]),
+                b'a'..=b'f' => ParseResult::Good(T::from((input[0] - b'a') + 10), &input[1..]),
+                b'A'..=b'F' => ParseResult::Good(T::from((input[0] - b'A') + 10), &input[1..]),
+                _ => ParseResult::new_bad("HexDigit parsed non-number"),
+            }
+        }
+    }
+}
+
+#[inline]
+pub fn hex_digit<'i, T>() -> impl Parser<'i, T>
+where
+    T: Copy + From<u8>,
+{
+    HexDigit(PhantomData::default())
+}
+
+#[inline]
+pub fn hex_byte<'i>() -> impl Parser<'i, u8> {
+    HexDigit(PhantomData::default())
+        .and(HexDigit(PhantomData::default()))
+        .map(|(a, b): (u8, u8)| a * 16 + b)
+}
+
+#[derive(Copy, Clone)]
 struct SignedInt<T>(PhantomData<T>);
 
 impl<'i, T> Parser<'i, T> for SignedInt<T>

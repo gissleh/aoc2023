@@ -36,6 +36,17 @@ where
     }
 
     #[inline]
+    pub fn row(&self, y: usize) -> &[T] {
+        self.storage
+            .cell_range(self.width * y, self.width * (y + 1))
+    }
+
+    #[inline]
+    pub fn rows(&self) -> impl Iterator<Item = (usize, &[T])> {
+        (0..self.height).map(|y| (y, self.row(y)))
+    }
+
+    #[inline]
     pub fn iter(&self) -> impl Iterator<Item = (Point<usize>, &T)> {
         self.storage
             .cell_range(0, self.width * self.height)

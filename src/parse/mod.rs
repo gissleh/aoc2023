@@ -6,7 +6,7 @@ use crate::utils::gather_target::GatherTarget;
 
 pub use bytes::*;
 pub use choice::choice;
-pub use int::{digit, signed_int, unsigned_int};
+pub use int::{digit, hex_byte, hex_digit, signed_int, unsigned_int};
 pub use skip::skip;
 
 use crate::parse::cap::{CappedBy, QuotedBy};
