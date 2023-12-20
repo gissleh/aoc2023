@@ -32,7 +32,7 @@ impl Machine {
     }
 
     fn rx_press_count(&self) -> u64 {
-        let mut dependencies: Vec<usize> = Vec::with_capacity(16);
+        let mut dependencies: Vec<u64> = Vec::with_capacity(16);
         let mut dep_stack: Vec<usize> = Vec::with_capacity(64);
         dep_stack.push(self.rx as usize);
         while let Some(index) = dep_stack.pop() {
@@ -49,7 +49,7 @@ impl Machine {
             }
 
             if remainder_mask > 0 {
-                dependencies.push(index);
+                dependencies.push(1 << index);
             }
         }
 
@@ -60,7 +60,7 @@ impl Machine {
 
             while let Some(i) = dependencies
                 .iter()
-                .position(|index| rs.conj_signalled & 1 << index != 0)
+                .position(|mask| rs.conj_signalled & *mask != 0)
             {
                 lcm = lcm.lcm(&n);
                 dependencies.swap_remove(i);
