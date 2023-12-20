@@ -59,20 +59,26 @@ fn p1(input: &Input) -> u32 {
 fn p2(input: &Input) -> u64 {
     let mut total = 0;
     let mut stack = Vec::with_capacity(128);
-    stack.push((name_to_index(b"in"), Range{
-        min: [1,1,1,1],
-        max: [4001,4001,4001,4001],
-    }));
+    stack.push((
+        name_to_index(b"in"),
+        Range {
+            min: [1, 1, 1, 1],
+            max: [4001, 4001, 4001, 4001],
+        },
+    ));
 
     #[cfg(test)]
-    assert_eq!(stack[0].1.volume(), 4000*4000*4000*4000);
+    assert_eq!(stack[0].1.volume(), 4000 * 4000 * 4000 * 4000);
 
     while let Some((curr, mut range)) = stack.pop() {
         for rule in input.workflows[curr].rules.iter() {
             let (matched, remainder) = range.split(rule.condition);
 
             #[cfg(test)]
-            println!("cond={:?} matched={:?} rem={:?}", rule.condition, matched, remainder);
+            println!(
+                "cond={:?} matched={:?} rem={:?}",
+                rule.condition, matched, remainder
+            );
 
             if let Some(matched) = matched {
                 match rule.outcome {
@@ -83,7 +89,7 @@ fn p2(input: &Input) -> u64 {
                         total += matched.volume()
                     }
                     Outcome::Reject => {}
-                    Outcome::SendTo(next) => { stack.push((next, matched)) }
+                    Outcome::SendTo(next) => stack.push((next, matched)),
                 }
             }
 
@@ -106,7 +112,8 @@ struct Range {
 
 impl Range {
     fn volume(&self) -> u64 {
-        self.min.iter()
+        self.min
+            .iter()
             .zip(self.max.iter())
             .map(|(min, max)| (*max - *min) as u64)
             .product()

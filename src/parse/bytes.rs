@@ -105,6 +105,36 @@ impl<'i> Parser<'i, &'i [u8]> for Word {
     }
 }
 
+struct TakeWhile<F>(F)
+where
+    F: Fn(u8) -> bool;
+
+impl<F> Clone for TakeWhile<F>
+where
+    F: Fn(u8) -> bool + Clone,
+{
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<F> Copy for TakeWhile<F> where F: Fn(u8) -> bool + Copy {}
+
+impl<'i, F> Parser<'i, &'i [u8]> for TakeWhile<F>
+where
+    F: Fn(u8) -> bool + Copy,
+{
+    fn parse(&self, input: &'i [u8]) -> ParseResult<'i, &'i [u8]> {
+        let len = input.iter().take_while(|c| (self.0)(**c)).count();
+
+        if len > 0 {
+            ParseResult::Good(&input[..len], &input[len..])
+        } else {
+            ParseResult::new_bad("nothing matched TakeWhile")
+        }
+    }
+}
+
 #[inline]
 pub fn everything<'i>() -> impl Parser<'i, &'i [u8]> {
     Everything
@@ -133,6 +163,13 @@ pub fn bytes_until<'i>(b: u8, eat: bool) -> impl Parser<'i, &'i [u8]> {
 #[inline]
 pub fn word<'i>() -> impl Parser<'i, &'i [u8]> {
     Word
+}
+
+pub fn take_while<'i, F>(f: F) -> impl Parser<'i, &'i [u8]>
+where
+    F: Fn(u8) -> bool + Copy,
+{
+    TakeWhile(f)
 }
 
 #[inline]
