@@ -1,7 +1,8 @@
+use num::traits::{WrappingAdd, WrappingSub};
 use num::One;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, Sub, SubAssign};
 use std::simd::{Simd, SimdElement};
 
 pub struct Point<T>(Simd<T, 2>)
@@ -42,6 +43,24 @@ where
             Point::new(x - offset, y),
             Point::new(x + offset, y),
             Point::new(x, y + offset),
+        ]
+    }
+}
+
+impl<T> Point<T>
+where
+    T: SimdElement,
+    T: Copy + WrappingAdd<Output = T> + WrappingSub<Output = T>,
+{
+    #[inline]
+    pub fn cardinals_offset_underflow(&self, offset: T) -> [Point<T>; 4] {
+        let [x, y] = *self.coords();
+
+        [
+            Point::new(x, y.wrapping_sub(&offset)),
+            Point::new(x.wrapping_sub(&offset), y),
+            Point::new(x.wrapping_add(&offset), y),
+            Point::new(x, y.wrapping_add(&offset)),
         ]
     }
 }
@@ -249,6 +268,18 @@ where
     #[inline(always)]
     fn div_assign(&mut self, rhs: Self) {
         self.0 /= rhs.0
+    }
+}
+
+impl<T> Rem for Point<T>
+where
+    T: SimdElement,
+    Simd<T, 2>: Rem<Output = Simd<T, 2>>,
+{
+    type Output = Point<T>;
+    #[inline(always)]
+    fn rem(self, rhs: Self) -> Self::Output {
+        Self(self.0 % rhs.0)
     }
 }
 
