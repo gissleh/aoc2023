@@ -48,7 +48,7 @@ fn p1(slabs: &[Slab]) -> usize {
 
         for (j, other) in slabs.iter().copied().enumerate() {
             if j == i || other.z_above() != slab.2 {
-                continue
+                continue;
             }
 
             if let FallResult::Over(height) = slab.check_fall(other) {
@@ -73,11 +73,14 @@ fn p1(slabs: &[Slab]) -> usize {
     }
 
     #[cfg(test)]
-    println!("{:?}", cannot_disintegrate.iter()
-        .enumerate()
-        .filter(|(_, v)| **v)
-        .map(|(i, _)| (i as u8 + b'A') as char)
-        .collect::<Vec<_>>()
+    println!(
+        "{:?}",
+        cannot_disintegrate
+            .iter()
+            .enumerate()
+            .filter(|(_, v)| **v)
+            .map(|(i, _)| (i as u8 + b'A') as char)
+            .collect::<Vec<_>>()
     );
 
     can_disintegrate
@@ -88,7 +91,7 @@ fn p2(slabs: &[Slab]) -> usize {
     for i in 0..slabs.len() {
         let si = slabs[i];
         let top = si.z_above();
-        for j in (i+1)..slabs.len() {
+        for j in (i + 1)..slabs.len() {
             let sj = slabs[j];
             if sj.2 < top {
                 continue;
@@ -182,7 +185,7 @@ impl Slab {
             }
             (Shape::Wide, Shape::Deep) => {
                 if z1 > z2 {
-                    if x1 <= x2 && x1 + l1 >= x2 && y1 >= y2 && y1 <= y2+l2 {
+                    if x1 <= x2 && x1 + l1 >= x2 && y1 >= y2 && y1 <= y2 + l2 {
                         FallResult::Over(z1 - z2 - 1)
                     } else {
                         FallResult::Passes
@@ -204,7 +207,7 @@ impl Slab {
             }
             (Shape::Deep, Shape::Wide) => {
                 if z1 > z2 {
-                    if y1 <= y2 && y1 + l1 >= y2 && x1 >= x2 && x1 <= x2+l2 {
+                    if y1 <= y2 && y1 + l1 >= y2 && x1 >= x2 && x1 <= x2 + l2 {
                         FallResult::Over(z1 - z2 - 1)
                     } else {
                         FallResult::Passes
