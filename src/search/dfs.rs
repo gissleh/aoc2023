@@ -27,6 +27,14 @@ where
             self.stack.push(state);
         }
     }
+
+    fn add_state_unchecked(&mut self, state: S) {
+        self.stack.push(state);
+    }
+
+    fn has_seen_state(&mut self, state: &S) -> bool {
+        self.seen.contains(state)
+    }
 }
 
 pub fn dfs<S>() -> impl Search<S>

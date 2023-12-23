@@ -28,6 +28,14 @@ where
             self.queue.push_back(state);
         }
     }
+
+    fn add_state_unchecked(&mut self, state: S) {
+        self.queue.push_back(state);
+    }
+
+    fn has_seen_state(&mut self, state: &S) -> bool {
+        self.seen.contains(state)
+    }
 }
 
 pub fn bfs<S>() -> impl Search<S>

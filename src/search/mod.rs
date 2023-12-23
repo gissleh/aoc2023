@@ -15,7 +15,14 @@ mod utils;
 pub trait Search<S>: Sized {
     fn reset(&mut self, initial_state: S);
     fn next_state(&mut self) -> Option<S>;
-    fn add_state(&mut self, state: S);
+    fn add_state_unchecked(&mut self, state: S);
+    fn has_seen_state(&mut self, state: &S) -> bool;
+
+    fn add_state(&mut self, state: S) {
+        if !self.has_seen_state(&state) {
+            self.add_state_unchecked(state)
+        }
+    }
 
     /// Reset the search with this new state.
     fn with_initial_state(mut self, initial_state: S) -> Self {

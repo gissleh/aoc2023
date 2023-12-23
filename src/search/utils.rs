@@ -56,3 +56,45 @@ where
         self.0.hash(state)
     }
 }
+
+/// WithHint allows you to pass along extra details in the state that
+/// will not be considered by the hasher.
+struct WithHint<S, H>(S, H);
+
+impl<S, H> Eq for WithHint<S, H> where S: Eq {}
+
+impl<S, H> PartialEq<Self> for WithHint<S, H>
+    where
+        S: Eq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
+impl<S, H> PartialOrd<Self> for WithHint<S, H>
+    where
+        S: Eq + PartialOrd<S> + Ord,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.0.cmp(&other.0))
+    }
+}
+
+impl<S, H> Ord for WithHint<S, H>
+    where
+        S: Ord,
+{
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
+impl<S, HI> Hash for WithHint<S, HI>
+    where
+        S: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state)
+    }
+}

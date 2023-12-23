@@ -58,6 +58,21 @@ where
         self.open
             .push(DijkstraStep(state.cost(), state, PhantomData::default()));
     }
+
+    fn add_state_unchecked(&mut self, state: S) {
+        self.open
+            .push(DijkstraStep(state.cost(), state, PhantomData::default()));
+    }
+
+    fn has_seen_state(&mut self, state: &S) -> bool {
+        let seen_key = state.key();
+        let step_cost = state.cost();
+
+        match self.seen.get(&seen_key) {
+            Some(seen_cost) => step_cost >= *seen_cost,
+            None => false,
+        }
+    }
 }
 
 struct DijkstraStep<C, K, S>(C, S, PhantomData<K>);
