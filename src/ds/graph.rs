@@ -79,6 +79,24 @@ impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP> {
     pub fn connect(&mut self, src: usize, dst: usize, edge: E) {
         self.nodes[src].edges.push((dst, edge));
     }
+
+    pub fn replace_connection(&mut self, src: usize, dst: usize, edge: E) {
+        if let Some(index) = self.nodes[src].edges.iter().position(|(edge_dst, _)| *edge_dst == dst) {
+            self.nodes[src].edges[index] = (dst, edge)
+        } else {
+            self.nodes[src].edges.push((dst, edge));
+        }
+    }
+
+    pub fn fallback_connection(&mut self, src: usize, dst: usize, edge: E) {
+        if let None = self.nodes[src].edges.iter().find(|(edge_dst, _)| *edge_dst == dst) {
+            self.nodes[src].edges.push((dst, edge));
+        }
+    }
+
+    pub fn is_connected(&self, src: usize, dst: usize) -> bool {
+        self.nodes[src].edges.iter().find(|(e, _)| *e == dst).is_some()
+    }
 }
 
 impl<K, V, E, const CAP: usize> Graph<K, V, E, CAP>
