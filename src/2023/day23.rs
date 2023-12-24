@@ -37,10 +37,11 @@ fn p2(graph: &MazeGraph) -> u32 {
 
 fn p1_step<const UHBW: bool>(graph: &MazeGraph, current: usize, visited: u64) -> Option<u32> {
     if current == 1 {
-        return Some(0)
+        return Some(0);
     }
 
-    graph.edges_from(current)
+    graph
+        .edges_from(current)
         .filter_map(|((cost, permitted), next, _)| {
             if (!UHBW && !*permitted) || visited & 1 << *next != 0 {
                 None
