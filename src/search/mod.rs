@@ -5,7 +5,7 @@ pub use dijkstra::{dijkstra, DijkstraState};
 use num::{Integer, One};
 use std::cmp::Ordering;
 use std::ops::{AddAssign, SubAssign};
-pub use utils::WithCost;
+pub use utils::{WithCost, WithHint};
 
 mod bfs;
 mod dfs;

@@ -59,7 +59,7 @@ where
 
 /// WithHint allows you to pass along extra details in the state that
 /// will not be considered by the hasher.
-struct WithHint<S, H>(S, H);
+pub struct WithHint<S, H>(pub S, pub H);
 
 impl<S, H> Eq for WithHint<S, H> where S: Eq {}
 
@@ -96,5 +96,14 @@ where
 {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state)
+    }
+}
+
+impl<S, H> Clone for WithHint<S, H>
+    where
+        S: Clone, H: Clone,
+{
+    fn clone(&self) -> Self {
+        Self(self.0.clone(), self.1.clone())
     }
 }
