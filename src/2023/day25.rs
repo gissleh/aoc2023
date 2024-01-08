@@ -3,7 +3,7 @@ use common::aoc::Day;
 use common::ds::Graph;
 use common::parse;
 use common::parse::Parser;
-use common::search::{Search, bfs, WithHint};
+use common::search::{bfs, Search, WithHint};
 
 type PartGraph = Graph<[u8; 3], (), (), 16>;
 
@@ -18,7 +18,11 @@ pub fn main(day: &mut Day, input: &[u8]) {
 fn parse(input: &[u8]) -> PartGraph {
     parse::n_bytes::<3>()
         .and_discard(b": ")
-        .and(parse::n_bytes::<3>().delimited_by(b' ').repeat::<ArrayVec<_, 8>>())
+        .and(
+            parse::n_bytes::<3>()
+                .delimited_by(b' ')
+                .repeat::<ArrayVec<_, 8>>(),
+        )
         .delimited_by(b'\n')
         .repeat_fold(
             || PartGraph::new(),
@@ -31,7 +35,7 @@ fn parse(input: &[u8]) -> PartGraph {
                 }
 
                 graph
-            }
+            },
         )
         .parse(input)
         .unwrap()
@@ -100,19 +104,17 @@ fn p1(input: &PartGraph) -> usize {
                 disabled_edges2.push(ek);
                 disabled_edges2.push(ek2);
 
-                let count: usize = bfs()
-                    .with_initial_state(found_start)
-                    .gather(|s, pos| {
-                        for (_, next, _) in input.edges_from(pos) {
-                            if disabled_edges.contains(&(pos, *next)) {
-                                continue;
-                            }
-
-                            s.add_state(*next);
+                let count: usize = bfs().with_initial_state(found_start).gather(|s, pos| {
+                    for (_, next, _) in input.edges_from(pos) {
+                        if disabled_edges.contains(&(pos, *next)) {
+                            continue;
                         }
 
-                        Some(())
-                    });
+                        s.add_state(*next);
+                    }
+
+                    Some(())
+                });
 
                 if count < input.len() - 10 {
                     return count * (input.len() - count);

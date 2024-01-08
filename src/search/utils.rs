@@ -100,8 +100,9 @@ where
 }
 
 impl<S, H> Clone for WithHint<S, H>
-    where
-        S: Clone, H: Clone,
+where
+    S: Clone,
+    H: Clone,
 {
     fn clone(&self) -> Self {
         Self(self.0.clone(), self.1.clone())
