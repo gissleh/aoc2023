@@ -3,7 +3,7 @@ use common::aoc::Day;
 use common::ds::Graph;
 use common::parse;
 use common::parse::Parser;
-use common::search::{Search, bfs, WithHint, WithCost};
+use common::search::{Search, bfs, WithHint};
 
 type PartGraph = Graph<[u8; 3], (), (), 16>;
 

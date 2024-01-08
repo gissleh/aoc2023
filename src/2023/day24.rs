@@ -6,7 +6,7 @@ const MIN: f64 = 200000000000000.0;
 const MAX: f64 = 400000000000000.0;
 
 pub fn main(day: &mut Day, input: &[u8]) {
-    let (input_i64, input_f64) = day.prep("Parse", || parse(input));
+    let (_input_i64, input_f64) = day.prep("Parse", || parse(input));
 
     day.note("Input length", input.len());
 
